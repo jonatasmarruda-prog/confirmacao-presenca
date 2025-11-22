@@ -3,46 +3,54 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Confirmação de Presença - Painel</title>
+<title>Confirmação de Presença</title>
 <style>
 body {
     font-family: Arial, sans-serif;
-    background-color: #f0f0f0;
+    background-color: #000;
+    color: #fff;
     padding: 20px;
+    margin: 0;
 }
 .container {
-    background-color: white;
-    padding: 20px;
-    border-radius: 8px;
-    max-width: 700px;
+    max-width: 600px;
     margin: auto;
 }
-.nome {
-    padding: 12px;
-    margin: 6px 0;
-    border-radius: 6px;
-    cursor: default;
+h2 {
+    text-align: center;
+    font-size: 3em;
+    margin-bottom: 20px;
+}
+button.nome {
+    display: block;
+    width: 100%;
+    padding: 30px 0;
+    margin: 10px 0;
+    font-size: 2em;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: background-color 0.3s;
 }
 .presente {
-    background-color: #8df58d;
+    background-color: #00ff00;
+    color: #000;
 }
 .faltante {
-    background-color: #e0e0e0;
-}
-h2, h3 {
-    text-align: center;
+    background-color: #333;
+    color: #fff;
 }
 .stats {
-    margin: 10px 0;
     text-align: center;
-    font-weight: bold;
+    margin-bottom: 20px;
+    font-size: 1.8em;
 }
 </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>Painel de Presença</h2>
+    <h2>Confirmação de Presença</h2>
     <div class="stats">
         <span id="totalConfirmados">Confirmados: 0</span> |
         <span id="totalFaltantes">Faltantes: 0</span>
@@ -52,9 +60,9 @@ h2, h3 {
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-// Configuração do Firebase
+// Configuração Firebase
 const firebaseConfig = {
     databaseURL: "https://trilheirosroo-a5861-default-rtdb.firebaseio.com/"
 };
@@ -72,25 +80,30 @@ const nomes = [
 "Daniele","Daniela","Eloah","Valteli","Loanna","Lucas"
 ];
 
+let estadosAtuais = {};
+
+// Atualiza lista no site
 function atualizarLista(estados) {
+    estadosAtuais = estados || {};
     const lista = document.getElementById("lista");
     lista.innerHTML = "";
     let confirmados = 0;
     let faltantes = 0;
 
     nomes.forEach(nome => {
-        const div = document.createElement("div");
-        div.textContent = nome;
+        const btn = document.createElement("button");
+        btn.textContent = nome;
+        btn.className = "nome " + (estadosAtuais[nome] ? "presente" : "faltante");
 
-        if (estados && estados[nome]) {
-            div.className = "nome presente";
-            confirmados++;
-        } else {
-            div.className = "nome faltante";
-            faltantes++;
-        }
+        btn.onclick = () => {
+            const novoEstado = !(estadosAtuais[nome]);
+            set(ref(db, "presenca/" + nome), novoEstado);
+        };
 
-        lista.appendChild(div);
+        lista.appendChild(btn);
+
+        if (estadosAtuais[nome]) confirmados++;
+        else faltantes++;
     });
 
     document.getElementById("totalConfirmados").textContent = "Confirmados: " + confirmados;
