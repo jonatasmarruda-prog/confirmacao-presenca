@@ -13,12 +13,24 @@ button.nome { display:block; width:100%; padding:30px 0; margin:10px 0; font-siz
 .faltante { background:#333; color:#fff;}
 .stats { text-align:center; margin-bottom:20px; font-size:1.8em;}
 
-#painelFinal { display:none; background:#111; padding:15px; border-radius:10px; margin-top:20px;}
-#painelFinal h3 { text-align:center;}
-#painelFinal .listaBloco { margin-bottom:15px; }
-#painelFinal ul { list-style:none; padding:0; margin:0; }
-#painelFinal li.presente { color:#00ff00; }
-#painelFinal li.faltante { color:#aaa; }
+#painelFinal {
+    display:none;
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    background:#000;
+    padding:20px;
+    overflow-y:auto;
+    z-index:9999;
+}
+
+#painelFinal h3 { text-align:center; font-size:2em; margin-bottom:20px;}
+#painelFinal .listaBloco { margin-bottom:20px;}
+#painelFinal ul { list-style:none; padding:0; margin:0;}
+#painelFinal li.presente { color:#00ff00; font-size:1.3em; margin:5px 0;}
+#painelFinal li.faltante { color:#aaa; font-size:1.3em; margin:5px 0;}
 
 #btnVerConfirmados {
     display:block;
@@ -33,18 +45,19 @@ button.nome { display:block; width:100%; padding:30px 0; margin:10px 0; font-siz
     margin-bottom:15px;
 }
 
-#btnZerar {
+#btnZerar, #btnFecharPainel {
     display:block;
-    margin:10px auto;
-    padding:10px 20px;
-    font-size:16px;
-    border-radius:6px;
+    width:100%;
+    padding:12px 0;
+    font-size:1.2em;
+    border:none;
+    border-radius:10px;
     cursor:pointer;
-    background:#ff0000;
-    color:#fff;
+    margin-bottom:15px;
 }
 
-#baixarCSV { display:block; margin:10px auto; padding:10px 20px; font-size:16px; border-radius:6px; cursor:pointer; }
+#btnFecharPainel { background:#444; color:#fff; }
+#btnZerar { background:#ff0000; color:#fff; }
 </style>
 </head>
 <body>
@@ -55,12 +68,13 @@ button.nome { display:block; width:100%; padding:30px 0; margin:10px 0; font-siz
 
 <div class="stats">
 <span id="totalConfirmados">Confirmados: 0</span> |
-<span id="totalFaltantes">Faltantes: 0</span>
+<span id="totalFaltantes">Faltantes: 46</span>
 </div>
 
 <div id="lista"></div>
 
 <div id="painelFinal">
+<button id="btnFecharPainel">Fechar</button>
 <h3>Resumo em Tempo Real</h3>
 
 <div class="listaBloco">
@@ -73,7 +87,6 @@ button.nome { display:block; width:100%; padding:30px 0; margin:10px 0; font-siz
 <ul id="listaFaltantes"></ul>
 </div>
 
-<button id="baixarCSV">Baixar CSV</button>
 <button id="btnZerar">Zerar Confirmações</button>
 </div>
 
@@ -153,6 +166,10 @@ document.getElementById("btnVerConfirmados").onclick=()=>{
     document.getElementById("painelFinal").style.display="block";
 };
 
+document.getElementById("btnFecharPainel").onclick=()=>{
+    document.getElementById("painelFinal").style.display="none";
+};
+
 document.getElementById("btnZerar").onclick=()=>{
     if(confirm("Tem certeza que deseja zerar tudo?")){
         const zerado={};
@@ -160,17 +177,6 @@ document.getElementById("btnZerar").onclick=()=>{
         set(listaRef,zerado);
     }
 };
-
-document.getElementById("baixarCSV").onclick=()=>{
-    let csv="Nome,Presença\n";
-    nomes.forEach(nome=>{ csv+=nome+","+(estadosAtuais[nome]?"Presente":"Faltante")+"\n"; });
-    const blob=new Blob([csv],{type:"text/csv"});
-    const url=URL.createObjectURL(blob);
-    const a=document.createElement("a");
-    a.href=url; a.download="resumo_presenca.csv"; a.click(); URL.revokeObjectURL(url);
-};
 </script>
 </body>
 </html>
-
-
