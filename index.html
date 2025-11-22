@@ -12,13 +12,38 @@ button.nome { display:block; width:100%; padding:30px 0; margin:10px 0; font-siz
 .presente { background:#00ff00; color:#000;}
 .faltante { background:#333; color:#fff;}
 .stats { text-align:center; margin-bottom:20px; font-size:1.8em;}
-#secretBtn { font-size:0.9em; background:none; border:none; color:#555; text-align:center; cursor:pointer; margin-bottom:10px; }
+
 #painelFinal { display:none; background:#111; padding:15px; border-radius:10px; margin-top:20px;}
 #painelFinal h3 { text-align:center;}
 #painelFinal .listaBloco { margin-bottom:15px; }
 #painelFinal ul { list-style:none; padding:0; margin:0; }
 #painelFinal li.presente { color:#00ff00; }
 #painelFinal li.faltante { color:#aaa; }
+
+#btnVerConfirmados {
+    display:block;
+    width:100%;
+    padding:15px 0;
+    font-size:1.5em;
+    border:none;
+    border-radius:12px;
+    cursor:pointer;
+    background:#0066ff;
+    color:#fff;
+    margin-bottom:15px;
+}
+
+#btnZerar {
+    display:block;
+    margin:10px auto;
+    padding:10px 20px;
+    font-size:16px;
+    border-radius:6px;
+    cursor:pointer;
+    background:#ff0000;
+    color:#fff;
+}
+
 #baixarCSV { display:block; margin:10px auto; padding:10px 20px; font-size:16px; border-radius:6px; cursor:pointer; }
 </style>
 </head>
@@ -26,7 +51,7 @@ button.nome { display:block; width:100%; padding:30px 0; margin:10px 0; font-siz
 <div class="container">
 <h2>Confirmação de Presença</h2>
 
-<button id="secretBtn">Clique aqui (secreto)</button>
+<button id="btnVerConfirmados">Ver Geral</button>
 
 <div class="stats">
 <span id="totalConfirmados">Confirmados: 0</span> |
@@ -36,17 +61,22 @@ button.nome { display:block; width:100%; padding:30px 0; margin:10px 0; font-siz
 <div id="lista"></div>
 
 <div id="painelFinal">
-<h3>Resumo Final</h3>
+<h3>Resumo em Tempo Real</h3>
+
 <div class="listaBloco">
 <h4>Presentes</h4>
 <ul id="listaPresentes"></ul>
 </div>
+
 <div class="listaBloco">
 <h4>Faltantes</h4>
 <ul id="listaFaltantes"></ul>
 </div>
+
 <button id="baixarCSV">Baixar CSV</button>
+<button id="btnZerar">Zerar Confirmações</button>
 </div>
+
 </div>
 
 <script type="module">
@@ -58,12 +88,18 @@ const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 const listaRef = ref(db, "presenca");
 
-let nomes = ["Lais","Pedro","Francielly","Yasmim","Allline","Daniella","Yasmim marques","Diego","Dorcas","Evelin","Samara","Mickalele","Paula","Diego Henrique","Ewverton","Aline","Any","Gleici","Thais","Regiane","Marinalva","Jessica","Cleverson","Elizabeth","Suely","Josueu","Heber","Ana Carolina","Vanessa","Raquel","Sandra","Josevaldo","Saul","Joao Batista","Mariana","Beatriz","Elaine","Janaina","Denise","Thais","Daniele","Daniela","Eloah","Valteli","Loanna","Lucas"];
-nomes.sort((a,b)=>a.localeCompare(b,'pt'));
+let nomes = [
+"Aline","Allline","Ana Carolina","Any","Beatriz","Cleverson","Daniela","Daniele","Daniella","Denise",
+"Diego","Diego Henrique","Dorcas","Elaine","Eloah","Elizabeth","Evelin","Ewverton","Francielly",
+"Gleici","Heber","Janaina","Jessica","Joao Batista","Josevaldo","Josueu","Lais","Loanna","Lucas",
+"Mariana","Marinalva","Mickalele","Paula","Pedro","Raquel","Regiane","Samara","Sandra","Saul",
+"Suely","Thais","Thais","Valteli","Vanessa","Yasmim","Yasmim Marques"
+];
+
+nomes.sort((a,b)=>a.localeCompare(b,"pt",{sensitivity:"base"}));
 
 let estadosAtuais = {};
 
-// Inicializa nomes no Firebase se não existir
 get(listaRef).then(snapshot=>{
     if(!snapshot.exists()){
         const inicial = {};
@@ -92,7 +128,8 @@ function atualizarLista(estados){
 function atualizarPainelFinal(){
     const ulPres = document.getElementById("listaPresentes");
     const ulFalt = document.getElementById("listaFaltantes");
-    ulPres.innerHTML=""; ulFalt.innerHTML="";
+    ulPres.innerHTML="";
+    ulFalt.innerHTML="";
     nomes.forEach(nome=>{
         const li=document.createElement("li");
         li.textContent=nome;
@@ -112,10 +149,16 @@ onValue(listaRef, snapshot=>{
     atualizarPainelFinal();
 });
 
-document.getElementById("secretBtn").onclick=()=>{
-    const painel=document.getElementById("painelFinal");
-    painel.style.display=painel.style.display==="none"?"block":"none";
-    document.getElementById("secretBtn").style.color="#0f0"; 
+document.getElementById("btnVerConfirmados").onclick=()=>{
+    document.getElementById("painelFinal").style.display="block";
+};
+
+document.getElementById("btnZerar").onclick=()=>{
+    if(confirm("Tem certeza que deseja zerar tudo?")){
+        const zerado={};
+        nomes.forEach(n=>zerado[n]=false);
+        set(listaRef,zerado);
+    }
 };
 
 document.getElementById("baixarCSV").onclick=()=>{
