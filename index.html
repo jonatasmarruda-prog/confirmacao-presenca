@@ -45,7 +45,6 @@ button.nome {
     margin-bottom: 20px;
     font-size: 1.8em;
 }
-/* Botão secreto */
 #secretBtn {
     font-size: 0.8em;
     background: none;
@@ -90,7 +89,7 @@ button#baixarCSV {
 <div class="container">
     <h2>Confirmação de Presença</h2>
 
-    <!-- Botão secreto, pode estar escrito de forma discreta -->
+    <!-- Botão secreto -->
     <button id="secretBtn">Confirmação de Presença</button>
 
     <div class="stats">
@@ -110,9 +109,9 @@ button#baixarCSV {
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+import { getDatabase, ref, set, onValue, get, child } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-// Firebase config
+// Config Firebase
 const firebaseConfig = {
     databaseURL: "https://trilheirosroo-a5861-default-rtdb.firebaseio.com/"
 };
@@ -131,7 +130,16 @@ const nomes = [
 
 let estadosAtuais = {};
 
-// Atualiza lista de botões para confirmar presença
+// Inicializa Firebase caso vazio
+get(listaRef).then(snapshot => {
+    if (!snapshot.exists()) {
+        const inicial = {};
+        nomes.forEach(nome => inicial[nome] = false);
+        set(listaRef, inicial);
+    }
+});
+
+// Atualiza lista de botões
 function atualizarLista(estados) {
     estadosAtuais = estados || {};
     const lista = document.getElementById("lista");
@@ -173,18 +181,17 @@ function atualizarPainelFinal() {
 
 // Atualiza em tempo real
 onValue(listaRef, snapshot => {
-    estadosAtuais = snapshot.val() || {};
-    atualizarLista(estadosAtuais);
+    atualizarLista(snapshot.val());
     atualizarPainelFinal();
 });
 
-// Botão secreto para mostrar painel final
+// Botão secreto
 document.getElementById("secretBtn").onclick = () => {
     const painel = document.getElementById("painelFinal");
     painel.style.display = painel.style.display === "none" ? "block" : "none";
 };
 
-// Baixar CSV do painel final
+// Baixar CSV
 document.getElementById("baixarCSV").onclick = () => {
     let csv = "Nome,Presença\n";
     nomes.forEach(nome => {
@@ -204,4 +211,5 @@ document.getElementById("baixarCSV").onclick = () => {
 
 </body>
 </html>
+
 
