@@ -3,180 +3,58 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Confirmação de Presença</title>
-<style>
-body { font-family: Arial; background:#000; color:#fff; padding:20px; margin:0;}
-.container { max-width:600px; margin:auto;}
-h2 { text-align:center; font-size:3em; margin-bottom:20px;}
-button.nome { display:block; width:100%; padding:30px 0; margin:10px 0; font-size:2em; border:none; border-radius:12px; cursor:pointer; transition:background-color 0.3s;}
-.presente { background:#00ff00; color:#000;}
-.faltante { background:#333; color:#fff;}
-.stats { text-align:center; margin-bottom:20px; font-size:1.8em;}
-
-#painelFinal {
-    display:none;
-    position:fixed;
-    top:0;
-    left:0;
-    width:100%;
-    height:100%;
-    background:#000;
-    padding:20px;
-    overflow-y:auto;
-    z-index:9999;
-}
-
-#painelFinal h3 { text-align:center; font-size:2em; margin-bottom:20px;}
-#painelFinal .listaBloco { margin-bottom:20px;}
-#painelFinal ul { list-style:none; padding:0; margin:0;}
-#painelFinal li.presente { color:#00ff00; font-size:1.3em; margin:5px 0;}
-#painelFinal li.faltante { color:#aaa; font-size:1.3em; margin:5px 0;}
-
-#btnVerConfirmados {
-    display:block;
-    width:100%;
-    padding:15px 0;
-    font-size:1.5em;
-    border:none;
-    border-radius:12px;
-    cursor:pointer;
-    background:#0066ff;
-    color:#fff;
-    margin-bottom:15px;
-}
-
-#btnZerar, #btnFecharPainel {
-    display:block;
-    width:100%;
-    padding:12px 0;
-    font-size:1.2em;
-    border:none;
-    border-radius:10px;
-    cursor:pointer;
-    margin-bottom:15px;
-}
-
-#btnFecharPainel { background:#444; color:#fff; }
-#btnZerar { background:#ff0000; color:#fff; }
-</style>
+<title>Teste de Bloqueio</title>
 </head>
-<body>
-<div class="container">
-<h2>Confirmação de Presença</h2>
+<body style="background:#111; color:white; text-align:center; padding:20px; font-family:Arial">
 
-<button id="btnVerConfirmados">Ver Geral</button>
+<h1>Teste de Bloqueio</h1>
+<h3>Limite: 1 vaga</h3>
 
-<div class="stats">
-<span id="totalConfirmados">Confirmados: 0</span> |
-<span id="totalFaltantes">Faltantes: 46</span>
+<label>Nome:</label>
+<input id="nome" style="padding:8px; width:80%;">
+
+<label style="display:block; margin-top:10px;">Quantidade:</label>
+<select id="quantidade" style="padding:8px; width:80%;">
+  <option value="1">1 vaga</option>
+</select>
+
+<div id="vagas" style="margin-top:15px; font-size:18px; font-weight:bold; color:#00ff90">
+Vagas restantes: 1
 </div>
 
-<div id="lista"></div>
+<button id="btn" onclick="reservar()" style="margin-top:20px; padding:12px 20px; font-size:16px; background:#25d366; border:none; border-radius:8px; cursor:pointer;">
+Confirmar reserva
+</button>
 
-<div id="painelFinal">
-<button id="btnFecharPainel">Fechar</button>
-<h3>Resumo em Tempo Real</h3>
+<p id="lotado" style="color:#ff4d4d; font-size:18px; font-weight:bold; margin-top:15px; display:none;">
+🚌 Ônibus lotado.
+</p>
 
-<div class="listaBloco">
-<h4>Presentes</h4>
-<ul id="listaPresentes"></ul>
-</div>
+<script>
+let vagasPreenchidas = 0;
+const limite = 1;
 
-<div class="listaBloco">
-<h4>Faltantes</h4>
-<ul id="listaFaltantes"></ul>
-</div>
+function reservar() {
+  const qtd = 1;
 
-<button id="btnZerar">Zerar Confirmações</button>
-</div>
+  if (vagasPreenchidas + qtd > limite) {
+    document.getElementById("btn").disabled = true;
+    document.getElementById("lotado").style.display = "block";
+    alert("Ônibus lotado");
+    return;
+  }
 
-</div>
+  vagasPreenchidas += qtd;
+  document.getElementById("vagas").textContent = "Vagas restantes: " + (limite - vagasPreenchidas);
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getDatabase, ref, set, onValue, get } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+  if (vagasPreenchidas >= limite) {
+    document.getElementById("btn").disabled = true;
+    document.getElementById("lotado").style.display = "block";
+  }
 
-const firebaseConfig = { databaseURL: "https://trilheirosroo-a5861-default-rtdb.firebaseio.com/" };
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
-const listaRef = ref(db, "presenca");
-
-let nomes = [
-"Aline","Allline","Ana Carolina","Any","Beatriz","Cleverson","Daniela","Daniele","Daniella","Denise",
-"Diego","Diego Henrique","Dorcas","Elaine","Eloah","Elizabeth","Evelin","Ewverton","Francielly",
-"Gleici","Heber","Janaina","Jessica","Joao Batista","Josevaldo","Josueu","Lais","Loanna","Lucas",
-"Mariana","Marinalva","Mickalele","Paula","Pedro","Raquel","Regiane","Samara","Sandra","Saul",
-"Suely","Thais","Thais","Valteli","Vanessa","Yasmim","Yasmim Marques"
-];
-
-nomes.sort((a,b)=>a.localeCompare(b,"pt",{sensitivity:"base"}));
-
-let estadosAtuais = {};
-
-get(listaRef).then(snapshot=>{
-    if(!snapshot.exists()){
-        const inicial = {};
-        nomes.forEach(n=>inicial[n]=false);
-        set(listaRef,inicial);
-    }
-});
-
-function atualizarLista(estados){
-    estadosAtuais = estados || {};
-    const lista = document.getElementById("lista");
-    lista.innerHTML="";
-    let confirmados=0, faltantes=0;
-    nomes.forEach(nome=>{
-        const btn = document.createElement("button");
-        btn.textContent = nome;
-        btn.className="nome "+(estadosAtuais[nome]?"presente":"faltante");
-        btn.onclick=()=>{ set(ref(db,"presenca/"+nome),!estadosAtuais[nome]); };
-        lista.appendChild(btn);
-        estadosAtuais[nome]?confirmados++:faltantes++;
-    });
-    document.getElementById("totalConfirmados").textContent="Confirmados: "+confirmados;
-    document.getElementById("totalFaltantes").textContent="Faltantes: "+faltantes;
+  alert("Reserva confirmada");
 }
-
-function atualizarPainelFinal(){
-    const ulPres = document.getElementById("listaPresentes");
-    const ulFalt = document.getElementById("listaFaltantes");
-    ulPres.innerHTML="";
-    ulFalt.innerHTML="";
-    nomes.forEach(nome=>{
-        const li=document.createElement("li");
-        li.textContent=nome;
-        if(estadosAtuais[nome]){
-            li.className="presente";
-            ulPres.appendChild(li);
-        } else {
-            li.className="faltante";
-            ulFalt.appendChild(li);
-        }
-    });
-}
-
-onValue(listaRef, snapshot=>{
-    estadosAtuais=snapshot.val()||{};
-    atualizarLista(estadosAtuais);
-    atualizarPainelFinal();
-});
-
-document.getElementById("btnVerConfirmados").onclick=()=>{
-    document.getElementById("painelFinal").style.display="block";
-};
-
-document.getElementById("btnFecharPainel").onclick=()=>{
-    document.getElementById("painelFinal").style.display="none";
-};
-
-document.getElementById("btnZerar").onclick=()=>{
-    if(confirm("Tem certeza que deseja zerar tudo?")){
-        const zerado={};
-        nomes.forEach(n=>zerado[n]=false);
-        set(listaRef,zerado);
-    }
-};
 </script>
+
 </body>
 </html>
