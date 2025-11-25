@@ -1,60 +1,150 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Teste de Bloqueio</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lista de Presença - Ônibus</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #0a0a0a;
+      color: #fff;
+      padding: 20px;
+      margin: 0;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+      font-size: 1.6rem;
+    }
+    .list {
+      max-width: 500px;
+      margin: auto;
+    }
+    .name {
+      background: #1a1a1a;
+      margin: 8px 0;
+      padding: 14px;
+      border-radius: 12px;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: 0.3s;
+      font-size: 1.1rem;
+    }
+    .name:active {
+      transform: scale(0.97);
+    }
+    .name.confirmed {
+      background: #0d5500;
+    }
+    button {
+      margin-top: 25px;
+      width: 100%;
+      padding: 16px;
+      border: none;
+      background: #0077ff;
+      color: #fff;
+      border-radius: 12px;
+      font-size: 1.1rem;
+      cursor: pointer;
+    }
+    button:active {
+      transform: scale(0.98);
+    }
+    .counter {
+      text-align: center;
+      margin-top: 25px;
+      font-size: 1.2rem;
+    }
+    @media (max-width: 480px) {
+      h1 {
+        font-size: 1.4rem;
+      }
+      .name {
+        padding: 12px;
+        font-size: 1rem;
+      }
+      button {
+        padding: 14px;
+        font-size: 1rem;
+      }
+      .counter {
+        font-size: 1.1rem;
+      }
+    }
+  </style>
 </head>
-<body style="background:#111; color:white; text-align:center; padding:20px; font-family:Arial">
+<body>
+  <h1>Lista de Presença - Ônibus</h1>
 
-<h1>Teste de Bloqueio</h1>
-<h3>Limite: 1 vaga</h3>
+  <div class="list" id="list"></div>
 
-<label>Nome:</label>
-<input id="nome" style="padding:8px; width:80%;">
+  <div class="counter" id="counter"></div>
 
-<label style="display:block; margin-top:10px;">Quantidade:</label>
-<select id="quantidade" style="padding:8px; width:80%;">
-  <option value="1">1 vaga</option>
-</select>
+  <button onclick="showConfirmed()">Ver Confirmados</button>
 
-<div id="vagas" style="margin-top:15px; font-size:18px; font-weight:bold; color:#00ff90">
-Vagas restantes: 1
-</div>
+  <script>
+    const names = [
+      "Alysson",
+      "Debora",
+      "Edivaldo",
+      "Eliana",
+      "Elizangela",
+      "Elma",
+      "Isadora",
+      "Ivy",
+      "Jessica",
+      "Junior",
+      "Lucas",
+      "Luciana",
+      "Livia",
+      "Maria Rafaela",
+      "Nayhany",
+      "Paula",
+      "Shely",
+      "Tatielen",
+      "Thaynan",
+      "Vitoria"
+    ];
 
-<button id="btn" onclick="reservar()" style="margin-top:20px; padding:12px 20px; font-size:16px; background:#25d366; border:none; border-radius:8px; cursor:pointer;">
-Confirmar reserva
-</button>
+    const confirmed = new Set();
 
-<p id="lotado" style="color:#ff4d4d; font-size:18px; font-weight:bold; margin-top:15px; display:none;">
-🚌 Ônibus lotado.
-</p>
+    function renderList() {
+      const list = document.getElementById("list");
+      list.innerHTML = "";
+      names.forEach(name => {
+        const div = document.createElement("div");
+        div.className = "name" + (confirmed.has(name) ? " confirmed" : "");
+        div.textContent = name;
+        div.onclick = () => togglePresence(name);
+        list.appendChild(div);
+      });
+      updateCounter();
+    }
 
-<script>
-let vagasPreenchidas = 0;
-const limite = 1;
+    function togglePresence(name) {
+      if (confirmed.has(name)) {
+        confirmed.delete(name);
+      } else {
+        confirmed.add(name);
+      }
+      renderList();
+    }
 
-function reservar() {
-  const qtd = 1;
+    function updateCounter() {
+      const total = names.length;
+      const conf = confirmed.size;
+      const falt = total - conf;
+      document.getElementById("counter").textContent = `Confirmados: ${conf} | Faltantes: ${falt}`;
+    }
 
-  if (vagasPreenchidas + qtd > limite) {
-    document.getElementById("btn").disabled = true;
-    document.getElementById("lotado").style.display = "block";
-    alert("Ônibus lotado");
-    return;
-  }
+    function showConfirmed() {
+      alert("Confirmados:\n\n" + [...confirmed].join("\n"));
+    }
 
-  vagasPreenchidas += qtd;
-  document.getElementById("vagas").textContent = "Vagas restantes: " + (limite - vagasPreenchidas);
-
-  if (vagasPreenchidas >= limite) {
-    document.getElementById("btn").disabled = true;
-    document.getElementById("lotado").style.display = "block";
-  }
-
-  alert("Reserva confirmada");
-}
-</script>
-
+    renderList();
+  </script>
 </body>
 </html>
