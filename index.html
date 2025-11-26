@@ -161,6 +161,7 @@ Observação: Para funcionamento "real-time" entre celulares diferentes, é nece
 
     // If Firebase configured, initialize it
     let dbRef = null;
+    let lastData = {}; // mantém último estado carregado para filtros
     if (firebaseConfig && typeof firebaseConfig === 'object'){
       // load firebase scripts dynamically
       const s1 = document.createElement('script'); s1.src = 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js'; document.head.appendChild(s1);
@@ -204,6 +205,7 @@ Observação: Para funcionamento "real-time" entre celulares diferentes, é nece
 
     // Render list based on a data map {name: true/false}
     function renderList(dataMap){
+      lastData = dataMap; // salva último estado{
       const data = {};
       names.forEach(n=>{ data[n] = !!dataMap[n]; });
       const confirmed = names.filter(n=>data[n]).length;
@@ -242,9 +244,9 @@ Observação: Para funcionamento "real-time" entre celulares diferentes, é nece
     }
 
     // Buttons
-    showAllBtn.onclick = ()=>{ listEl.setAttribute('data-filter','all'); renderList(getLocal()); };
-    showConfirmedBtn.onclick = ()=>{ listEl.setAttribute('data-filter','confirmed'); renderList(getLocal()); };
-    showMissingBtn.onclick = ()=>{ listEl.setAttribute('data-filter','missing'); renderList(getLocal()); };
+    showAllBtn.onclick = ()=>{ listEl.setAttribute('data-filter','all'); renderList(lastData); }; renderList(getLocal()); };
+    showConfirmedBtn.onclick = ()=>{ listEl.setAttribute('data-filter','confirmed'); renderList(lastData); }; renderList(getLocal()); };
+    showMissingBtn.onclick = ()=>{ listEl.setAttribute('data-filter','missing'); renderList(lastData); }; renderList(getLocal()); };
 
     // For firebase users: helper to render when dbRef used
     // If firebase, the db listener will call renderList with remote data
@@ -264,4 +266,3 @@ Observação: Para funcionamento "real-time" entre celulares diferentes, é nece
   </script>
 </body>
 </html>
-
