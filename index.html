@@ -1,150 +1,236 @@
-<!DOCTYPE html>
+<!--
+Arquivo: presencia_onibus.html
+Descrição: Página única (HTML/CSS/JS) para lista de presença no ônibus.
+- Visual mobile-first com letras grandes e botões grandes.
+- Lista de nomes já preenchida (você enviou a lista).
+- Confirmação por clique (verde = confirmado).
+- Botões: Ver todos / Confirmados / Faltantes.
+- Contador em tempo real usando Firebase Realtime Database se você adicionar a config;
+  se não adicionar, o site usa localStorage (funciona apenas no mesmo dispositivo) para testes.
+
+Como usar:
+1) Abra este arquivo localmente ou cole no Glitch (New Project -> "hello-webpage" e substitua o index.html).
+2) (Opcional, para sincronização em tempo real entre dispositivos) Crie um projeto no Firebase, ative Realtime Database e cole a sua configuração no lugar indicado abaixo (entre as chaves `FIREBASE_CONFIG_HERE`).
+3) Salve e abra a URL pública do Glitch ou abra o arquivo no navegador do celular.
+
+Observação: Para funcionamento "real-time" entre celulares diferentes, é necessário configurar o Firebase Realtime Database e colar a configuração.
+-->
+
+<!doctype html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Lista de Presença - Ônibus</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #0a0a0a;
-      color: #fff;
-      padding: 20px;
-      margin: 0;
-    }
-    h1 {
-      text-align: center;
-      margin-bottom: 20px;
-      font-size: 1.6rem;
-    }
-    .list {
-      max-width: 500px;
-      margin: auto;
-    }
-    .name {
-      background: #1a1a1a;
-      margin: 8px 0;
-      padding: 14px;
-      border-radius: 12px;
-      cursor: pointer;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      transition: 0.3s;
-      font-size: 1.1rem;
-    }
-    .name:active {
-      transform: scale(0.97);
-    }
-    .name.confirmed {
-      background: #0d5500;
-    }
-    button {
-      margin-top: 25px;
-      width: 100%;
-      padding: 16px;
-      border: none;
-      background: #0077ff;
-      color: #fff;
-      border-radius: 12px;
-      font-size: 1.1rem;
-      cursor: pointer;
-    }
-    button:active {
-      transform: scale(0.98);
-    }
-    .counter {
-      text-align: center;
-      margin-top: 25px;
-      font-size: 1.2rem;
-    }
-    @media (max-width: 480px) {
-      h1 {
-        font-size: 1.4rem;
-      }
-      .name {
-        padding: 12px;
-        font-size: 1rem;
-      }
-      button {
-        padding: 14px;
-        font-size: 1rem;
-      }
-      .counter {
-        font-size: 1.1rem;
-      }
-    }
+    :root{--bg:#fbfbfd;--card:#fff;--accent:#09a66d;--danger:#e24b4b;--muted:#666}
+    *{box-sizing:border-box}
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial; margin:0; background:var(--bg); color:#111}
+    .app{max-width:720px;margin:0 auto;padding:16px}
+    header{display:flex;align-items:center;gap:12px}
+    h1{font-size:20px;margin:0}
+    .status{margin-top:12px;display:flex;gap:8px;flex-wrap:wrap}
+    .chip{background:var(--card);padding:8px 12px;border-radius:12px;box-shadow:0 1px 2px rgba(0,0,0,0.04);font-weight:600}
+    .controls{display:flex;gap:8px;margin-top:12px}
+    button.btn{flex:1;padding:12px;border-radius:10px;border:0;font-size:16px;font-weight:700}
+    .btn-all{background:#fff;color:#111}
+    .btn-confirm{background:var(--accent);color:#fff}
+    .btn-missing{background:var(--danger);color:#fff}
+    .list{margin-top:14px;background:var(--card);border-radius:12px;padding:8px;box-shadow:0 6px 18px rgba(0,0,0,0.06)}
+    .item{display:flex;align-items:center;justify-content:space-between;padding:12px;border-bottom:1px solid #f1f1f1}
+    .item:last-child{border-bottom:0}
+    .name{font-size:18px;font-weight:700}
+    .actions{display:flex;gap:8px;align-items:center}
+    .confirm-btn{padding:10px 14px;border-radius:8px;border:0;font-weight:800}
+    .confirmed{background:linear-gradient(90deg, #16a34a, #059669);color:#fff}
+    .not-confirmed{background:#fff;border:2px dashed #ddd;color:#333}
+    .small{font-size:13px;color:var(--muted)}
+    footer{margin-top:14px;text-align:center;color:var(--muted);font-size:13px}
+    /* Mobile spacing */
+    @media(min-width:560px){h1{font-size:22px}.name{font-size:18px}}
   </style>
 </head>
 <body>
-  <h1>Lista de Presença - Ônibus</h1>
+  <div class="app">
+    <header>
+      <h1>Lista de Presença - Ônibus</h1>
+    </header>
 
-  <div class="list" id="list"></div>
+    <div class="status">
+      <div class="chip" id="total">Total: 0</div>
+      <div class="chip" id="confirmedCount">Confirmados: 0</div>
+      <div class="chip" id="missingCount">Faltantes: 0</div>
+    </div>
 
-  <div class="counter" id="counter"></div>
+    <div class="controls">
+      <button class="btn btn-all" id="showAll">Ver todos</button>
+      <button class="btn btn-confirm" id="showConfirmed">Ver confirmados</button>
+      <button class="btn btn-missing" id="showMissing">Ver faltantes</button>
+    </div>
 
-  <button onclick="showConfirmed()">Ver Confirmados</button>
+    <div class="list" id="list"></div>
+
+    <footer>
+      Toque no seu nome para confirmar. Atualização em tempo real se você configurar o Firebase.
+    </footer>
+  </div>
 
   <script>
-    const names = [
+    // === CONFIGURAÇÃO DO FIREBASE (OPCIONAL) ===
+    // Se quiser sincronizar em tempo real entre dispositivos, crie um projeto no Firebase
+    // (https://console.firebase.google.com/) -> Realtime Database (modo test ou regras apropriadas)
+    // Depois cole sua configuração abaixo no objeto `firebaseConfig`.
+
+    const firebaseConfig = null; // <-- Cole aqui sua configuração {apiKey:..., authDomain:..., databaseURL:..., projectId:..., storageBucket:..., messagingSenderId:..., appId:...}
+
+    // Lista de nomes fornecida (ordenada alfabeticamente automaticamente)
+    const initialNames = [
       "Alysson",
-      "Debora",
-      "Edivaldo",
+      "Ana Julia",
+      "Debora Betania",
+      "Debora Carla",
       "Eliana",
-      "Elizangela",
+      "Edivaldo",
       "Elma",
+      "Flavia Yane",
+      "Gabriellen",
+      "Indrid Mirely",
       "Isadora",
-      "Ivy",
       "Jessica",
+      "Jessica Lorrayne",
+      "Joana",
+      "Jonatas Marcos",
+      "Josiane",
       "Junior",
+      "Livia",
       "Lucas",
       "Luciana",
-      "Livia",
+      "Luciene",
+      "Maria luisa",
+      "Maria Nemis",
       "Maria Rafaela",
+      "Nadir",
       "Nayhany",
       "Paula",
+      "Paula Francinete",
       "Shely",
+      "Silvânia",
+      "Tamiris",
       "Tatielen",
       "Thaynan",
-      "Vitoria"
+      "Vitoria",
+      "Wallison",
+      "Ana Julia" // duplicate removed elsewhere if needed
     ];
 
-    const confirmed = new Set();
+    // sanitize: unique, sort case-insensitive
+    const names = Array.from(new Set(initialNames.map(n=>n.trim()))).sort((a,b)=>a.toLowerCase().localeCompare(b.toLowerCase()));
 
-    function renderList() {
-      const list = document.getElementById("list");
-      list.innerHTML = "";
-      names.forEach(name => {
-        const div = document.createElement("div");
-        div.className = "name" + (confirmed.has(name) ? " confirmed" : "");
-        div.textContent = name;
-        div.onclick = () => togglePresence(name);
-        list.appendChild(div);
-      });
-      updateCounter();
-    }
+    // Elements
+    const listEl = document.getElementById('list');
+    const totalEl = document.getElementById('total');
+    const confirmedEl = document.getElementById('confirmedCount');
+    const missingEl = document.getElementById('missingCount');
+    const showAllBtn = document.getElementById('showAll');
+    const showConfirmedBtn = document.getElementById('showConfirmed');
+    const showMissingBtn = document.getElementById('showMissing');
 
-    function togglePresence(name) {
-      if (confirmed.has(name)) {
-        confirmed.delete(name);
-      } else {
-        confirmed.add(name);
+    totalEl.textContent = `Total: ${names.length}`;
+
+    // Storage key
+    const STORAGE_KEY = 'presenca_onibus_confirmados_v1';
+
+    // If Firebase configured, initialize it
+    let dbRef = null;
+    if (firebaseConfig && typeof firebaseConfig === 'object'){
+      // load firebase scripts dynamically
+      const s1 = document.createElement('script'); s1.src = 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js'; document.head.appendChild(s1);
+      const s2 = document.createElement('script'); s2.src = 'https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js'; document.head.appendChild(s2);
+      s2.onload = ()=>{
+        const app = firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        dbRef = db.ref('presenca_onibus');
+        // Initialize remote data if empty
+        dbRef.once('value', snap=>{
+          if(!snap.exists()){
+            const initial = {};
+            names.forEach(n=>{ initial[n]=false });
+            dbRef.set(initial);
+          }
+        });
+        // Listen for changes
+        dbRef.on('value', snap=>{
+          const data = snap.val() || {};
+          renderList(data);
+        });
       }
-      renderList();
     }
 
-    function updateCounter() {
-      const total = names.length;
-      const conf = confirmed.size;
-      const falt = total - conf;
-      document.getElementById("counter").textContent = `Confirmados: ${conf} | Faltantes: ${falt}`;
+    // Local fallback
+    function getLocal(){
+      try{ return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; }catch(e){return{}} }
+    function setLocal(obj){ localStorage.setItem(STORAGE_KEY, JSON.stringify(obj)); }
+
+    // Toggle confirmation
+    function toggle(name){
+      if (dbRef){
+        dbRef.child(name).transaction(current=> !current);
+      } else {
+        const data = getLocal();
+        data[name] = !data[name];
+        setLocal(data);
+        renderList(data);
+      }
     }
 
-    function showConfirmed() {
-      alert("Confirmados:\n\n" + [...confirmed].join("\n"));
+    // Render list based on a data map {name: true/false}
+    function renderList(dataMap){
+      const data = {};
+      names.forEach(n=>{ data[n] = !!dataMap[n]; });
+      const confirmed = names.filter(n=>data[n]).length;
+      const missing = names.length - confirmed;
+      confirmedEl.textContent = `Confirmados: ${confirmed}`;
+      missingEl.textContent = `Faltantes: ${missing}`;
+
+      // current filter
+      const filter = listEl.getAttribute('data-filter') || 'all';
+      listEl.innerHTML = '';
+      names.forEach(name=>{
+        const is = data[name];
+        if (filter==='confirmed' && !is) return;
+        if (filter==='missing' && is) return;
+        const item = document.createElement('div'); item.className='item';
+        const left = document.createElement('div'); left.innerHTML = `<div class="name">${name}</div>`;
+        const actions = document.createElement('div'); actions.className='actions';
+        const btn = document.createElement('button');
+        btn.className = 'confirm-btn ' + (is? 'confirmed' : 'not-confirmed');
+        btn.textContent = is? 'Confirmado' : 'Confirmar';
+        btn.onclick = ()=> toggle(name);
+        actions.appendChild(btn);
+        item.appendChild(left); item.appendChild(actions);
+        listEl.appendChild(item);
+      });
     }
 
-    renderList();
+    // Initial render: use Firebase if available, else local
+    if (!dbRef){
+      // ensure local has entries for all names
+      const local = getLocal();
+      let changed = false;
+      names.forEach(n=>{ if (typeof local[n] === 'undefined'){ local[n]=false; changed = true; }});
+      if (changed) setLocal(local);
+      renderList(local);
+    }
+
+    // Buttons
+    showAllBtn.onclick = ()=>{ listEl.setAttribute('data-filter','all'); renderList(getLocal()); };
+    showConfirmedBtn.onclick = ()=>{ listEl.setAttribute('data-filter','confirmed'); renderList(getLocal()); };
+    showMissingBtn.onclick = ()=>{ listEl.setAttribute('data-filter','missing'); renderList(getLocal()); };
+
+    // For firebase users: helper to render when dbRef used
+    // If firebase, the db listener will call renderList with remote data
+
   </script>
 </body>
 </html>
+
