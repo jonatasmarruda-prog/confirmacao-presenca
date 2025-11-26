@@ -77,6 +77,11 @@ Observação: Para funcionamento "real-time" entre celulares diferentes, é nece
     <footer>
       Toque no seu nome para confirmar. Atualização em tempo real se você configurar o Firebase.
     </footer>
+
+    <div style="text-align:center;margin-top:20px;">
+      <button id="resetHidden" style="opacity:0;width:1px;height:1px;pointer-events:none;">reset</button>
+      <button id="resetTrigger" style="margin-top:10px;padding:10px 14px;border-radius:8px;border:0;background:#333;color:#fff;font-size:14px;">Segurar 5s para Reset</button>
+    </div>
   </div>
 
   <script>
@@ -243,6 +248,18 @@ Observação: Para funcionamento "real-time" entre celulares diferentes, é nece
     // For firebase users: helper to render when dbRef used
     // If firebase, the db listener will call renderList with remote data
 
+    // RESET SEGURO
+    const resetBtn = document.getElementById('resetTrigger');
+    let pressTimer;
+    resetBtn.addEventListener('mousedown', ()=>{
+      pressTimer = setTimeout(()=>{
+        if (dbRef){ dbRef.set(Object.fromEntries(names.map(n=>[n,false]))); }
+        else { const local={}; names.forEach(n=>local[n]=false); setLocal(local); renderList(local);}    
+        alert('Lista resetada!');
+      },5000);
+    });
+    resetBtn.addEventListener('mouseup', ()=> clearTimeout(pressTimer));
+    resetBtn.addEventListener('mouseleave', ()=> clearTimeout(pressTimer));
   </script>
 </body>
 </html>
