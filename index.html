@@ -1,22 +1,3 @@
-<!-- VERSÃO FINAL PRONTA PARA PUBLICAR NO GITHUB PAGES -->
-<!--
-Arquivo: presencia_onibus.html
-Descrição: Página única (HTML/CSS/JS) para lista de presença no ônibus.
-- Visual mobile-first com letras grandes e botões grandes.
-- Lista de nomes já preenchida (você enviou a lista).
-- Confirmação por clique (verde = confirmado).
-- Botões: Ver todos / Confirmados / Faltantes.
-- Contador em tempo real usando Firebase Realtime Database se você adicionar a config;
-  se não adicionar, o site usa localStorage (funciona apenas no mesmo dispositivo) para testes.
-
-Como usar:
-1) Abra este arquivo localmente ou cole no Glitch (New Project -> "hello-webpage" e substitua o index.html).
-2) (Opcional, para sincronização em tempo real entre dispositivos) Crie um projeto no Firebase, ative Realtime Database e cole a sua configuração no lugar indicado abaixo (entre as chaves `FIREBASE_CONFIG_HERE`).
-3) Salve e abra a URL pública do Glitch ou abra o arquivo no navegador do celular.
-
-Observação: Para funcionamento "real-time" entre celulares diferentes, é necessário configurar o Firebase Realtime Database e colar a configuração.
--->
-
 <!doctype html>
 <html lang="pt-BR">
 <head>
@@ -24,73 +5,70 @@ Observação: Para funcionamento "real-time" entre celulares diferentes, é nece
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Lista de Presença - Ônibus</title>
   <style>
-    :root{--bg:#0d0d0d;--card:#1a1a1a;--accent:#16a34a;--danger:#dc2626;--muted:#aaa}
+    :root{
+      --bg:#0d0d0d;--card:#1a1a1a;--accent:#16a34a;--danger:#dc2626;--muted:#aaa;
+    }
     *{box-sizing:border-box}
-    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial; margin:0; background:var(--bg); color:white}
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;margin:0;background:var(--bg);color:white}
     .app{max-width:720px;margin:0 auto;padding:16px}
-    header{display:flex;align-items:center;gap:12px}
-    h1{font-size:20px;margin:0}
+    header{display:flex;flex-direction:column;align-items:center;gap:12px}
+    h1{font-size:22px;margin:0}
     .status{margin-top:12px;display:flex;gap:8px;flex-wrap:wrap}
-    .chip{background:var(--card); color:white;padding:8px 12px;border-radius:12px;box-shadow:0 1px 2px rgba(0,0,0,0.04);font-weight:600}
+    .chip{background:var(--card);padding:8px 12px;border-radius:12px;font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,0.4)}
     .controls{display:flex;gap:8px;margin-top:12px}
-    button.btn{flex:1;padding:12px;border-radius:10px;border:0;font-size:16px;font-weight:700}
-    .btn-all{background:#fff;color:white}
-    .btn-confirm{background:var(--accent);color:#fff}
-    .btn-missing{background:var(--danger);color:#fff}
-    .list{margin-top:14px;background:var(--card); color:white;border-radius:12px;padding:8px;box-shadow:0 6px 18px rgba(0,0,0,0.06)}
-    .item{display:flex;align-items:center;justify-content:space-between;padding:12px;border-bottom:1px solid #f1f1f1}
+    button.btn{flex:1;padding:12px;border-radius:10px;border:0;font-size:16px;font-weight:700;cursor:pointer}
+    .btn-all{background:#232323;color:white}
+    .btn-confirm{background:var(--accent);color:white}
+    .btn-missing{background:var(--danger);color:white}
+    .list{margin-top:14px;background:var(--card);border-radius:12px;padding:8px;box-shadow:0 6px 18px rgba(0,0,0,0.5)}
+    .item{display:flex;align-items:center;justify-content:space-between;padding:12px;border-bottom:1px solid rgba(255,255,255,0.06)}
     .item:last-child{border-bottom:0}
     .name{font-size:18px;font-weight:700}
-    .actions{display:flex;gap:8px;align-items:center}
-    .confirm-btn{padding:10px 14px;border-radius:8px;border:0;font-weight:800}
-    .confirmed{background:linear-gradient(90deg, #16a34a, #059669);color:#fff}
-    .not-confirmed{background:#1a1a1a;border:2px dashed #444;color:#ccc}
-    .small{font-size:13px;color:var(--muted)}
-    footer{margin-top:14px;text-align:center;color:var(--muted);font-size:13px}
-    /* Mobile spacing */
-    @media(min-width:560px){h1{font-size:22px}.name{font-size:18px}}
+    .confirm-btn{padding:10px 14px;border-radius:10px;border:0;font-weight:700;cursor:pointer}
+    .confirmed{background:#16a34a;color:white}
+    .not-confirmed{background:transparent;border:2px dashed #555;color:white}
+    footer{text-align:center;margin-top:16px;color:var(--muted)}
   </style>
 </head>
-<body style="background:#0d0d0d;color:white;">
-  <div style="text-align:center;margin-bottom:16px;">
-    <img src="https://i.imgur.com/MwHr761.png" alt="Logo Trilheiros" style="width:120px;margin-top:12px;" />
-  </div>
-  <div class="app">
-    <header>
-      <h1>Lista de Presença - Ônibus</h1>
-    </header>
+<body>
 
-    <div class="status">
-      <div class="chip" id="total">Total: 0</div>
-      <div class="chip" id="confirmedCount">Confirmados: 0</div>
-      <div class="chip" id="missingCount">Faltantes: 0</div>
-    </div>
+<div style="text-align:center;margin-top:12px;">
+  <img src="https://i.imgur.com/MwHr761.png" style="width:130px;">
+</div>
 
-    <div class="controls">
-      <button class="btn btn-all" id="showAll">Ver todos</button>
-      <button class="btn btn-confirm" id="showConfirmed">Ver confirmados</button>
-      <button class="btn btn-missing" id="showMissing">Ver faltantes</button>
-    </div>
+<div class="app">
+  <header>
+    <h1>Lista de Presença - Ônibus</h1>
+  </header>
 
-    <div class="list" id="list"></div>
-
-    <footer>
-      Toque no seu nome para confirmar. Atualização em tempo real se você configurar o Firebase.
-    </footer>
-
-    <div style="text-align:center;margin-top:20px;">
-      <button id="resetHidden" style="opacity:0;width:1px;height:1px;pointer-events:none;">reset</button>
-      <button id="resetTrigger" style="margin-top:10px;padding:10px 14px;border-radius:8px;border:0;background:#333;color:#fff;font-size:14px;">Segurar 5s para Reset</button>
-    </div>
+  <div class="status">
+    <div class="chip" id="total">Total: 0</div>
+    <div class="chip" id="confirmedCount">Confirmados: 0</div>
+    <div class="chip" id="missingCount">Faltantes: 0</div>
   </div>
 
-  <script>
-    // === CONFIGURAÇÃO DO FIREBASE (OPCIONAL) ===
-    // Se quiser sincronizar em tempo real entre dispositivos, crie um projeto no Firebase
-    // (https://console.firebase.google.com/) -> Realtime Database (modo test ou regras apropriadas)
-    // Depois cole sua configuração abaixo no objeto `firebaseConfig`.
+  <div class="controls">
+    <button class="btn btn-all" id="showAll">Ver todos</button>
+    <button class="btn btn-confirm" id="showConfirmed">Confirmados</button>
+    <button class="btn btn-missing" id="showMissing">Faltantes</button>
+  </div>
 
-    const firebaseConfig = {
+  <div class="list" id="list"></div>
+
+  <footer>Toque no nome para confirmar. Atualização em tempo real.</footer>
+
+  <div style="text-align:center;margin-top:20px;">
+    <button id="resetBtn" style="padding:10px 14px;border-radius:8px;border:0;background:#333;color:white;">
+      Resetar lista
+    </button>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+<script>
+const firebaseConfig = {
   apiKey: "AIzaSyAUssjdtiOs0oO9yhWV3dExsj7sGaB4jEA",
   authDomain: "onibus-morro-da-mesa.firebaseapp.com",
   databaseURL: "https://onibus-morro-da-mesa-default-rtdb.firebaseio.com",
@@ -99,140 +77,79 @@ Observação: Para funcionamento "real-time" entre celulares diferentes, é nece
   messagingSenderId: "21597144482",
   appId: "1:21597144482:web:93a55c39d477e67c1d5efb",
   measurementId: "G-WP1BX1H1F0"
-}; // <-- Cole aqui sua configuração {apiKey:..., authDomain:..., databaseURL:..., projectId:..., storageBucket:..., messagingSenderId:..., appId:...}
+};
 
-    // Lista de nomes fornecida (ordenada alfabeticamente automaticamente)
-    const initialNames = [
-      "Nayhany","Junior","Vitoria","Alysson","Elizangela","Thaynan","Elma","Tatielen",
-      "Isadora","Lucas","Maria Rafaela","Livia","Luciana","Paula","Jessica","Eliana",
-      "Ivy","Edivaldo","Debora Betania","Shely","Paula Francinete","Tamiris","Maria Nemis",
-      "Indrid Mirely","Jonatas Marcos","Debora Carla","Flavia Yane","Gabriellen","Jessica Lorrayne",
-      "Ana Julia","Luciene","Josiane","Maria luisa","Wallison","Nadir","Silvânia","Joana",
-      "Izabel","Fagner"
-    ];
+const app = firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+const dbRef = db.ref("presenca_onibus");
 
-    // sanitize: unique, sort case-insensitive
-    const names = Array.from(new Set(initialNames.map(n=>n.trim()))).sort((a,b)=>a.toLowerCase().localeCompare(b.toLowerCase()));
+const names = [
+  "Alysson","Ana Julia","Debora Betania","Debora Carla","Edivaldo","Eliana","Elizangela",
+  "Elma","Fagner","Flavia Yane","Gabriellen","Indrid Mirely","Isadora","Izabel","Izabelly",
+  "Jessica","Jessica Lorrayne","Joana","Jonatas Marcos","Josiane","Junior","Livia","Lucas",
+  "Luciana","Luciene","Maria Nemis","Maria Rafaela","Maria luisa","Nadir","Nayhany","Paula",
+  "Paula Francinete","Shely","Silvânia","Tamiris","Tatielen","Thaynan","Vitoria","Wallison",
+  "Ivy"
+];
 
-    // Elements
-    const listEl = document.getElementById('list');
-    const totalEl = document.getElementById('total');
-    const confirmedEl = document.getElementById('confirmedCount');
-    const missingEl = document.getElementById('missingCount');
-    const showAllBtn = document.getElementById('showAll');
-    const showConfirmedBtn = document.getElementById('showConfirmed');
-    const showMissingBtn = document.getElementById('showMissing');
+document.getElementById("total").textContent = "Total: " + names.length;
 
-    totalEl.textContent = `Total: ${names.length}`;
+dbRef.once("value").then(snap=>{
+  if(!snap.exists()){
+    const init={}; names.forEach(n=>init[n]=false);
+    dbRef.set(init);
+  }
+});
 
-    // Storage key
-    const STORAGE_KEY = 'presenca_onibus_confirmados_v1';
+let last={};
 
-    // If Firebase configured, initialize it
-    let dbRef = null;
-    let lastData = {}; // mantém último estado carregado para filtros
-    if (firebaseConfig && typeof firebaseConfig === 'object'){
-      // load firebase scripts dynamically
-      const s1 = document.createElement('script'); s1.src = 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js'; document.head.appendChild(s1);
-      const s2 = document.createElement('script'); s2.src = 'https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js'; document.head.appendChild(s2);
-      s2.onload = ()=>{
-        const app = firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
-        dbRef = db.ref('presenca_onibus');
-        // Initialize remote data if empty
-        dbRef.once('value', snap=>{
-          if(!snap.exists()){
-            const initial = {};
-            names.forEach(n=>{ initial[n]=false });
-            dbRef.set(initial);
-          }
-        });
-        // Listen for changes
-        dbRef.on('value', snap=>{
-          const data = snap.val() || {};
-          renderList(data);
-        });
-      }
-    }
+dbRef.on("value", snap=>{
+  last = snap.val();
+  render(last);
+});
 
-    // Local fallback
-    function getLocal(){
-      try{ return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; }catch(e){return{}} }
-    function setLocal(obj){ localStorage.setItem(STORAGE_KEY, JSON.stringify(obj)); }
+function toggle(n){
+  dbRef.child(n).set(!last[n]);
+}
 
-    // Toggle confirmation
-    function toggle(name){
-      if (dbRef){
-        dbRef.child(name).transaction(current=> !current);
-      } else {
-        const data = getLocal();
-        data[name] = !data[name];
-        setLocal(data);
-        renderList(data);
-      }
-    }
+function render(data){
+  const listEl = document.getElementById("list");
+  const filter = listEl.getAttribute("data-filter") || "all";
 
-    // Render list based on a data map {name: true/false}
-    function renderList(dataMap){
-      lastData = dataMap; // salva último estado{
-      const data = {};
-      names.forEach(n=>{ data[n] = !!dataMap[n]; });
-      const confirmed = names.filter(n=>data[n]).length;
-      const missing = names.length - confirmed;
-      confirmedEl.textContent = `Confirmados: ${confirmed}`;
-      missingEl.textContent = `Faltantes: ${missing}`;
+  const confirmed = names.filter(n=>data[n]).length;
+  document.getElementById("confirmedCount").textContent = "Confirmados: "+confirmed;
+  document.getElementById("missingCount").textContent = "Faltantes: "+(names.length-confirmed);
 
-      // current filter
-      const filter = listEl.getAttribute('data-filter') || 'all';
-      listEl.innerHTML = '';
-      names.forEach(name=>{
-        const is = data[name];
-        if (filter==='confirmed' && !is) return;
-        if (filter==='missing' && is) return;
-        const item = document.createElement('div'); item.className='item';
-        const left = document.createElement('div'); left.innerHTML = `<div class="name">${name}</div>`;
-        const actions = document.createElement('div'); actions.className='actions';
-        const btn = document.createElement('button');
-        btn.className = 'confirm-btn ' + (is? 'confirmed' : 'not-confirmed');
-        btn.textContent = is? 'Confirmado' : 'Confirmar';
-        btn.onclick = ()=> toggle(name);
-        actions.appendChild(btn);
-        item.appendChild(left); item.appendChild(actions);
-        listEl.appendChild(item);
-      });
-    }
+  listEl.innerHTML = "";
 
-    // Initial render: use Firebase if available, else local
-    if (!dbRef){
-      // ensure local has entries for all names
-      const local = getLocal();
-      let changed = false;
-      names.forEach(n=>{ if (typeof local[n] === 'undefined'){ local[n]=false; changed = true; }});
-      if (changed) setLocal(local);
-      renderList(local);
-    }
+  names.forEach(n=>{
+    const ok = data[n];
 
-    // Buttons
-    showAllBtn.onclick = ()=>{ listEl.setAttribute('data-filter','all'); renderList(lastData); }; renderList(getLocal()); };
-    showConfirmedBtn.onclick = ()=>{ listEl.setAttribute('data-filter','confirmed'); renderList(lastData); }; renderList(getLocal()); };
-    showMissingBtn.onclick = ()=>{ listEl.setAttribute('data-filter','missing'); renderList(lastData); }; renderList(getLocal()); };
+    if(filter==="confirmed" && !ok) return;
+    if(filter==="missing" && ok) return;
 
-    // For firebase users: helper to render when dbRef used
-    // If firebase, the db listener will call renderList with remote data
+    listEl.innerHTML += `
+      <div class="item">
+        <div class="name">${n}</div>
+        <button class="confirm-btn ${ok?'confirmed':'not-confirmed'}" onclick="toggle('${n}')">
+          ${ok?'Confirmado':'Confirmar'}
+        </button>
+      </div>
+    `;
+  });
+}
 
-    // RESET SEGURO
-    const resetBtn = document.getElementById('resetTrigger');
-    let pressTimer;
-    resetBtn.addEventListener('mousedown', ()=>{
-      pressTimer = setTimeout(()=>{
-        if (dbRef){ dbRef.set(Object.fromEntries(names.map(n=>[n,false]))); }
-        else { const local={}; names.forEach(n=>local[n]=false); setLocal(local); renderList(local);}    
-        alert('Lista resetada!');
-      },5000);
-    });
-    resetBtn.addEventListener('mouseup', ()=> clearTimeout(pressTimer));
-    resetBtn.addEventListener('mouseleave', ()=> clearTimeout(pressTimer));
-  </script>
+document.getElementById("showAll").onclick=()=>{document.getElementById("list").setAttribute("data-filter","all");render(last);};
+document.getElementById("showConfirmed").onclick=()=>{document.getElementById("list").setAttribute("data-filter","confirmed");render(last);};
+document.getElementById("showMissing").onclick=()=>{document.getElementById("list").setAttribute("data-filter","missing");render(last);};
+
+document.getElementById("resetBtn").onclick=()=>{
+  if(confirm("Zerar confirmações?")){
+    const init={}; names.forEach(n=>init[n]=false);
+    dbRef.set(init);
+  }
+};
+</script>
+
 </body>
 </html>
-
