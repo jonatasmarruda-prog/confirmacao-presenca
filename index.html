@@ -1,188 +1,205 @@
 <!doctype html>
 <html lang="pt-BR">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Painel do Organizador</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Lista de Presença - Ônibus</title>
 
-<style>
-  body {
-    background:#0d0d0d;
-    color:white;
-    font-family: system-ui;
-    padding:20px;
-  }
-  h1 { text-align:center; }
-  .card {
-    background:#1a1a1a;
-    padding:16px;
-    border-radius:12px;
-    margin-bottom:16px;
-  }
-  .btn {
-    padding:12px;
-    border:0;
-    border-radius:8px;
-    font-size:16px;
-    font-weight:bold;
-    cursor:pointer;
-    margin-top:12px;
-    width:100%;
-  }
-  .btn-green { background:#16a34a; color:#fff; }
-  .btn-red { background:#dc2626; color:#fff; }
-  .btn-blue { background:#2563eb; color:#fff; }
-  table {
-    width:100%;
-    border-collapse: collapse;
-    margin-top:16px;
-    font-size:16px;
-  }
-  th, td {
-    padding:8px;
-    border-bottom:1px solid #333;
-  }
-  th { text-align:left; }
-  .hidden { display:none; }
-</style>
-
+  <style>
+    :root{--bg:#0d0d0d;--card:#1a1a1a;--accent:#16a34a;--danger:#dc2626;--muted:#aaa}
+    *{box-sizing:border-box}
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial; margin:0; background:var(--bg); color:white}
+    .app{max-width:720px;margin:0 auto;padding:16px}
+    h1{font-size:20px;margin:0;text-align:center}
+    .status{margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+    .chip{background:var(--card); color:white;padding:8px 12px;border-radius:12px;font-weight:600}
+    .controls{display:flex;gap:8px;margin-top:12px}
+    button.btn{flex:1;padding:12px;border-radius:10px;border:0;font-size:16px;font-weight:700}
+    .btn-all{background:#444;color:#fff}
+    .btn-confirm{background:var(--accent);color:#fff}
+    .btn-missing{background:var(--danger);color:#fff}
+    .list{margin-top:14px;background:var(--card); color:white;border-radius:12px;padding:8px}
+    .item{display:flex;align-items:center;justify-content:space-between;padding:12px;border-bottom:1px solid #333}
+    .item:last-child{border-bottom:0}
+    .name{font-size:18px;font-weight:700}
+    .confirm-btn{padding:10px 14px;border-radius:8px;border:0;font-weight:800;cursor:pointer}
+    .confirmed{background:#16a34a;color:#fff}
+    .not-confirmed{background:#1a1a1a;border:2px dashed #555;color:#aaa}
+    footer{margin-top:14px;text-align:center;color:var(--muted);font-size:13px}
+    @media(min-width:560px){h1{font-size:24px}.name{font-size:20px}}
+  </style>
 </head>
+
 <body>
-
-<h1>Painel do Organizador 🔐</h1>
-
-<div id="loginBox" class="card">
-  <h3>Digite a senha do organizador</h3>
-  <input id="senha" type="password" style="width:100%;padding:10px;border-radius:8px;border:0;">
-  <button class="btn btn-blue" onclick="login()">Entrar</button>
-</div>
-
-<div id="content" class="hidden">
-
-  <div class="card">
-    <h2>📊 Resumo do Evento</h2>
-    <p>Total: <b id="total"></b></p>
-    <p>Confirmados: <b id="confirmados"></b></p>
-    <p>Faltantes: <b id="faltantes"></b></p>
+  <div style="text-align:center;margin-bottom:16px;">
+    <img src="https://i.imgur.com/MwHr761.png" alt="Logo Trilheiros" style="width:120px;margin-top:12px;" />
   </div>
 
-  <div class="card">
-    <h2>📋 Lista de Participantes</h2>
-    <table id="tabela"></table>
+  <div class="app">
+
+    <h1>Lista de Presença - Ônibus</h1>
+
+    <div class="status">
+      <div class="chip" id="total">Total: 0</div>
+      <div class="chip" id="confirmedCount">Confirmados: 0</div>
+      <div class="chip" id="missingCount">Faltantes: 0</div>
+    </div>
+
+    <div class="controls">
+      <button class="btn btn-all" id="showAll">Ver todos</button>
+      <button class="btn btn-confirm" id="showConfirmed">Confirmados</button>
+      <button class="btn btn-missing" id="showMissing">Faltantes</button>
+    </div>
+
+    <div class="list" id="list"></div>
+
+    <footer>Toque no seu nome para confirmar sua presença.</footer>
+
+    <div style="text-align:center;margin-top:20px;">
+      <button id="resetTrigger" style="margin-top:10px;padding:10px 14px;border-radius:8px;border:0;background:#333;color:#fff;font-size:14px;">
+        Segurar 5s para Reset
+      </button>
+    </div>
   </div>
 
-  <div class="card">
-    <h2>📥 Exportações</h2>
-    <button class="btn btn-blue" onclick="exportarPDF()">Gerar PDF</button>
-    <button class="btn btn-green" onclick="exportarWhatsApp()">Enviar Confirmados no WhatsApp</button>
-  </div>
+  <!-- SOM ENGRAÇADO -->
+  <audio id="somConfirma" src="https://www.myinstants.com/media/sounds/cartoon-pop.mp3"></audio>
 
-  <div class="card">
-    <h2>🧹 Administração</h2>
-    <button class="btn btn-red" onclick="resetar()">RESETAR LISTA (Zerar confirmações)</button>
-  </div>
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
-</div>
+  <script>
+    // === CONFIG DO FIREBASE ===
+    const firebaseConfig = {
+      apiKey: "AIzaSyAUssjdtiOs0oO9yhWV3dExsj7sGaB4jEA",
+      authDomain: "onibus-morro-da-mesa.firebaseapp.com",
+      databaseURL: "https://onibus-morro-da-mesa-default-rtdb.firebaseio.com",
+      projectId: "onibus-morro-da-mesa",
+      storageBucket: "onibus-morro-da-mesa.firebasestorage.app",
+      messagingSenderId: "21597144482",
+      appId: "1:21597144482:web:93a55c39d477e67c1d5efb",
+      measurementId: "G-WP1BX1H1F0"
+    };
 
-<!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const ref = db.ref("presenca_onibus");
 
-<script>
-// === CONFIG DO SEU FIREBASE ===
-const firebaseConfig = {
-  apiKey: "AIzaSyAUssjdtiOs0oO9yhWV3dExsj7sGaB4jEA",
-  authDomain: "onibus-morro-da-mesa.firebaseapp.com",
-  databaseURL: "https://onibus-morro-da-mesa-default-rtdb.firebaseio.com",
-  projectId: "onibus-morro-da-mesa",
-  storageBucket: "onibus-morro-da-mesa.firebasestorage.app",
-  messagingSenderId: "21597144482",
-  appId: "1:21597144482:web:93a55c39d477e67c1d5efb",
-  measurementId: "G-WP1BX1H1F0"
-};
+    // ===== Lista de nomes =====
+    const initialNames = [
+      "Alysson","Ana Julia","Cidinha","Debora Betania","Debora Carla","Edivaldo",
+      "Eliana","Elizangela","Elma","Fagner","Flavia Yane","Gabriellen","Indrid Mirely",
+      "Isadora","Ivy","Izabel","Izabelly","Jessica","Jessica Lorrayne","Joana",
+      "Jonatas Marcos","Josiane","Junior","Livia","Lucas","Luciana","Luciene",
+      "Maria Lúcia","Maria Nemis","Maria Rafaela","Maria luisa","Meire","Nadir",
+      "Nayhany","Paula","Paula Francinete","Shely","Silvânia","Tamiris","Tatielen",
+      "Thaynan","Vitoria","Wallison"
+    ];
 
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
-const ref = db.ref("presenca_onibus");
+    const names = Array.from(new Set(initialNames)).sort((a,b)=>a.localeCompare(b));
 
-const listaNomes = [];
+    // Elementos
+    const listEl = document.getElementById('list');
+    const totalEl = document.getElementById('total');
+    const confirmedEl = document.getElementById('confirmedCount');
+    const missingEl = document.getElementById('missingCount');
 
-// === LOGIN SIMPLES ===
-function login(){
-  const s = document.getElementById("senha").value;
-  if(s === "trilheiros2025"){      
-    document.getElementById("loginBox").classList.add("hidden");
-    document.getElementById("content").classList.remove("hidden");
-  } else {
-    alert("Senha incorreta!");
-  }
-}
+    totalEl.textContent = `Total: ${names.length}`;
 
-// === CARREGA LISTA ===
-ref.on("value", snap => {
-  const data = snap.val();
-  if(!data) return;
+    let lastData = {};
 
-  render(data);
-});
+    // Se não existir no Firebase, cria
+    ref.once("value", snap => {
+      if (!snap.exists()) {
+        const init = {};
+        names.forEach(n => init[n] = false);
+        ref.set(init);
+      }
+    });
 
-function render(data){
-  const nomes = Object.keys(data);
-  const confirmados = nomes.filter(n => data[n]).length;
-  const faltantes = nomes.length - confirmados;
+    // Atualiza em tempo real
+    ref.on("value", snap => {
+      const data = snap.val() || {};
+      lastData = data;
+      render(data);
+    });
 
-  document.getElementById("total").innerText = nomes.length;
-  document.getElementById("confirmados").innerText = confirmados;
-  document.getElementById("faltantes").innerText = faltantes;
+    // ===== Som e confirmação =====
+    function toggle(name){
+      const som = document.getElementById("somConfirma");
+      som.currentTime = 0;
+      som.play();
 
-  // tabela
-  const table = document.getElementById("tabela");
-  table.innerHTML = `
-    <tr><th>Nome</th><th>Status</th></tr>
-  `;
+      ref.child(name).transaction(v => !v);
+    }
 
-  nomes.forEach(n=>{
-    table.innerHTML += `
-      <tr>
-        <td>${n}</td>
-        <td>${data[n] ? "✅ Confirmado" : "❌ Não"}</td>
-      </tr>
-    `;
-  });
-}
+    // ===== Renderizar lista =====
+    function render(data){
+      const confirmed = Object.values(data).filter(v => v).length;
+      const missing = names.length - confirmed;
 
-// === EXPORTAR PDF ===
-function exportarPDF(){
-  const w = window.open("", "_blank");
-  w.document.write("<h1>Relatório do Passeio</h1>");
-  w.document.write(document.getElementById("tabela").outerHTML);
-  w.print();
-}
+      confirmedEl.textContent = `Confirmados: ${confirmed}`;
+      missingEl.textContent = `Faltantes: ${missing}`;
 
-// === EXPORTAR WHATSAPP ===
-function exportarWhatsApp(){
-  ref.once("value", snap => {
-    const data = snap.val();
-    const nomesConfirmados = Object.keys(data).filter(n => data[n]);
-    const texto = `Confirmados (%20${nomesConfirmados.length}%20pessoas):%0A- ` 
-                + nomesConfirmados.join("%0A- ");
+      const filter = listEl.getAttribute("data-filter") || "all";
 
-    window.open(`https://wa.me/5566996926174?text=${texto}`, "_blank");
-  });
-}
+      listEl.innerHTML = "";
 
-// === RESET ===
-function resetar(){
-  if(!confirm("Tem certeza que deseja resetar TUDO?")) return;
+      names.forEach(name => {
+        const is = data[name];
 
-  ref.once("value", snap => {
-    const data = snap.val();
-    const novo = {};
-    Object.keys(data).forEach(n => novo[n] = false);
-    ref.set(novo);
-  });
-}
-</script>
+        if (filter === "confirmed" && !is) return;
+        if (filter === "missing" && is) return;
+
+        const item = document.createElement("div");
+        item.className = "item";
+
+        item.innerHTML = `
+          <div class="name">${name}</div>
+          <button class="confirm-btn ${is ? "confirmed" : "not-confirmed"}">
+            ${is ? "Confirmado" : "Confirmar"}
+          </button>
+        `;
+
+        item.querySelector("button").onclick = () => toggle(name);
+
+        listEl.appendChild(item);
+      });
+    }
+
+    // ===== Botões de filtro =====
+    document.getElementById("showAll").onclick = () => {
+      listEl.setAttribute("data-filter", "all");
+      render(lastData);
+    };
+
+    document.getElementById("showConfirmed").onclick = () => {
+      listEl.setAttribute("data-filter", "confirmed");
+      render(lastData);
+    };
+
+    document.getElementById("showMissing").onclick = () => {
+      listEl.setAttribute("data-filter", "missing");
+      render(lastData);
+    };
+
+    // ===== Reset seguro =====
+    const resetBtn = document.getElementById("resetTrigger");
+    let pressTimer;
+
+    resetBtn.onmousedown = () => {
+      pressTimer = setTimeout(() => {
+        const novo = {};
+        names.forEach(n => novo[n] = false);
+        ref.set(novo);
+        alert("Lista resetada!");
+      }, 5000);
+    };
+
+    resetBtn.onmouseup = () => clearTimeout(pressTimer);
+    resetBtn.onmouseleave = () => clearTimeout(pressTimer);
+  </script>
 
 </body>
 </html>
