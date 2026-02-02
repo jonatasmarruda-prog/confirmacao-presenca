@@ -3,286 +3,200 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Reservas – Trilhas de Março</title>
-
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+<title>Reservas</title>
 
 <style>
-body{margin:0;background:#0f0f0f;font-family:Poppins,sans-serif;color:#fff}
-.container{max-width:520px;margin:auto;padding:14px}
-.card{background:#181818;border-radius:22px;padding:16px;box-shadow:0 0 25px rgba(0,0,0,.7)}
-.banner img{width:100%;border-radius:18px}
-
-h2{text-align:center;margin:10px 0}
-p{font-size:14px;line-height:1.6;color:#ddd}
-
-label{margin-top:12px;display:block;font-weight:600}
-select,input{
-  width:100%;
-  padding:14px;
-  border-radius:14px;
-  border:none;
-  background:#2a2a2a;
-  color:#fff;
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #0f0f0f;
+  color: #fff;
 }
 
-.info{text-align:center;margin-top:6px;font-size:14px}
-.total{font-size:22px;font-weight:700;text-align:center;color:#00ff9c;margin-top:10px}
-
-.ultimas{
-  display:none;
-  background:#ff1744;
-  padding:10px;
-  border-radius:12px;
-  text-align:center;
-  font-weight:700;
-  margin-top:8px;
-  animation:pulse .8s infinite;
-}
-@keyframes pulse{0%{opacity:1}50%{opacity:.5}100%{opacity:1}}
-
-.esgotado{
-  display:none;
-  background:#550000;
-  padding:12px;
-  border-radius:12px;
-  text-align:center;
-  font-weight:700;
-  margin-top:10px;
+.container {
+  max-width: 520px;
+  margin: auto;
+  padding: 16px;
 }
 
-.btn{
-  width:100%;
-  margin-top:16px;
-  padding:18px;
-  border-radius:50px;
-  border:none;
-  font-size:18px;
-  font-weight:700;
-  background:linear-gradient(135deg,#00ff9c,#00c96b);
-  cursor:pointer;
+.card {
+  background: #181818;
+  border-radius: 18px;
+  padding: 18px;
+  box-shadow: 0 10px 25px rgba(0,0,0,.6);
+}
+
+h2 {
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+label {
+  display: block;
+  margin-top: 12px;
+  font-weight: bold;
+}
+
+input, select {
+  width: 100%;
+  padding: 14px;
+  margin-top: 6px;
+  border-radius: 12px;
+  border: none;
+  background: #2a2a2a;
+  color: #fff;
+  font-size: 16px;
+}
+
+.info, .total {
+  text-align: center;
+  margin-top: 12px;
+  font-size: 18px;
+}
+
+.total {
+  font-size: 22px;
+  font-weight: bold;
+  color: #00e676;
+}
+
+.ultimas {
+  display: none;
+  background: #ff9800;
+  padding: 10px;
+  border-radius: 10px;
+  text-align: center;
+  margin-top: 10px;
+  animation: pulse 1s infinite;
+}
+
+.esgotado {
+  display: none;
+  background: #d32f2f;
+  padding: 12px;
+  border-radius: 10px;
+  text-align: center;
+  margin-top: 10px;
+  font-weight: bold;
+}
+
+button {
+  width: 100%;
+  padding: 16px;
+  margin-top: 16px;
+  font-size: 18px;
+  font-weight: bold;
+  border: none;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #00e676, #00c853);
+  color: #000;
+  box-shadow: 0 8px 0 #008f39;
+}
+
+button:active {
+  transform: translateY(4px);
+  box-shadow: 0 4px 0 #008f39;
+}
+
+@keyframes pulse {
+  0% {opacity: 1;}
+  50% {opacity: .5;}
+  100% {opacity: 1;}
 }
 </style>
-
-<script>
-const PIX="trilheiros.roomt@gmail.com";
-const WHATS="5566996926174";
-
-/* LINKS DE CARTÃO – APENAS 1 VAGA */
-const CARTAO_CHAPADA={
-  compartilhado_transporte:"https://mpago.li/1VoTeFx",
-  casal_transporte:"https://mpago.li/1szssQp",
-  casal_carro:"https://mpago.li/2iuq5uT"
-};
-
-/* VAGAS */
-const VAGAS={
-  chapada:{total:30,key:"vagas_chapada"},
-  lagoa:{total:28,key:"vagas_lagoa"}
-};
-
-/* VALORES */
-const VALORES={
-  chapada:{
-    compartilhado_transporte:{pix:420,cartao:440},
-    casal_transporte:{pix:740,cartao:760},
-    compartilhado_carro:{pix:330,cartao:350},
-    casal_carro:{pix:510,cartao:530}
-  },
-  lagoa:{
-    adulto:{pix:336,cartao:340},
-    crianca:{pix:280,cartao:280},
-    carro:{pix:215,cartao:215}
-  }
-};
-
-let passeioAtual="chapada";
-let vagasDisponiveis=0;
-
-function iniciar(){
-  carregarPasseio();
-}
-
-function carregarPasseio(){
-  passeioAtual=passeio.value;
-
-  if(passeioAtual==="chapada"){
-    banner.src="https://i.postimg.cc/vZLwxjSc/Copia-de-Post-instagram-dia-dos-povos-indigenas-ousado-verde.png";
-    descricao.innerHTML=`
-🗓️ <b>7 e 8 de março</b><br>
-🕑 Saída: 07/03 às 14h<br>
-🕒 Retorno: 08/03 às 15h<br><br>
-🏡 <b>Hospedagem:</b> Pousada Mirante<br><br>
-📍 <b>Roteiro:</b><br>
-• Mirante Geodésico<br>
-• Mirante Morro dos Ventos<br>
-• Praça Central da Chapada<br>
-• Cachoeira Véu da Noiva<br><br>
-✅ Incluso: transporte (exceto carro próprio), café da manhã e acesso aos atrativos<br>
-❌ Não incluso: almoço e jantar
-`;
-    boxChapada.style.display="block";
-    boxLagoa.style.display="none";
-  }
-
-  if(passeioAtual==="lagoa"){
-    banner.src="https://i.postimg.cc/7hYnXCqs/Instagram-Post-Agencia-de-Viagem-Moderno-Azul-e-Branco.png";
-    descricao.innerHTML=`
-🗓️ <b>15 de março</b><br>
-🚐 Saída de Rondonópolis<br><br>
-💙 Um dia inteiro em águas cristalinas.<br><br>
-✅ Incluso: transporte, snorkel, colete, seguro de vida e guia<br>
-❌ Não incluso: café da manhã e almoço
-`;
-    boxChapada.style.display="none";
-    boxLagoa.style.display="block";
-  }
-
-  vagasDisponiveis=localStorage.getItem(VAGAS[passeioAtual].key);
-  if(vagasDisponiveis===null){
-    vagasDisponiveis=VAGAS[passeioAtual].total;
-    localStorage.setItem(VAGAS[passeioAtual].key,vagasDisponiveis);
-  }
-  vagasDisponiveis=parseInt(vagasDisponiveis);
-
-  atualizar();
-}
-
-function atualizar(){
-  let qtd=0,totalValor=0;
-  const forma=pagamento.value;
-
-  infoVagas.innerHTML=`🎟️ Vagas disponíveis: <b>${vagasDisponiveis}</b>`;
-  ultimas.style.display=(vagasDisponiveis<=5 && vagasDisponiveis>0)?"block":"none";
-  esgotado.style.display=vagasDisponiveis<=0?"block":"none";
-
-  if(passeioAtual==="chapada"){
-    qtd=parseInt(qtdVagas.value);
-    if(qtd>0) totalValor=qtd*VALORES.chapada[opcaoChapada.value][forma];
-  }
-
-  if(passeioAtual==="lagoa"){
-    qtd=parseInt(qtdAdulto.value)+parseInt(qtdCrianca.value)+parseInt(qtdCarro.value);
-    totalValor=
-      (parseInt(qtdAdulto.value)*VALORES.lagoa.adulto[forma])+
-      (parseInt(qtdCrianca.value)*VALORES.lagoa.crianca[forma])+
-      (parseInt(qtdCarro.value)*VALORES.lagoa.carro[forma]);
-  }
-
-  if(qtd===0||vagasDisponiveis<=0){total.innerText="";return;}
-  if(qtd>vagasDisponiveis){total.innerText="⚠️ Quantidade maior que vagas disponíveis";return;}
-
-  total.innerText=`🎟️ ${qtd} vaga(s) | 💰 R$ ${totalValor}`;
-}
-
-function confirmar(){
-  if(!nomeCliente.value.trim()) return alert("Informe seu nome.");
-
-  let qtd=0;
-  if(passeioAtual==="chapada") qtd=parseInt(qtdVagas.value);
-  if(passeioAtual==="lagoa") qtd=parseInt(qtdAdulto.value)+parseInt(qtdCrianca.value)+parseInt(qtdCarro.value);
-  if(qtd>vagasDisponiveis) return;
-
-  if(pagamento.value==="pix"){
-    navigator.clipboard.writeText(PIX);
-    alert("PIX copiado! Envie o comprovante para garantir sua vaga.");
-  }else{
-    if(qtd>1){
-      alert("Para mais de uma vaga no cartão, fale com o Jonatas para gerar um novo link.");
-      return;
-    }
-    if(passeioAtual==="chapada" && CARTAO_CHAPADA[opcaoChapada.value]){
-      window.open(CARTAO_CHAPADA[opcaoChapada.value],"_blank");
-      alert("Após o pagamento, envie o comprovante.");
-    }else{
-      alert("Pagamento no cartão disponível apenas via contato com o Jonatas.");
-      return;
-    }
-  }
-
-  vagasDisponiveis-=qtd;
-  localStorage.setItem(VAGAS[passeioAtual].key,vagasDisponiveis);
-
-  const msg=`Reserva – ${passeio.options[passeio.selectedIndex].text}
-Nome: ${nomeCliente.value}
-${total.innerText}
-
-Envio o comprovante para garantir minha vaga.`;
-
-  window.open(`https://wa.me/${WHATS}?text=${encodeURIComponent(msg)}`);
-  atualizar();
-}
-</script>
 </head>
 
-<body onload="iniciar()">
+<body>
 <div class="container">
-<div class="card">
+  <div class="card">
 
-<div class="banner"><img id="banner"></div>
+    <h2>Reservas</h2>
 
-<h2>Reservas</h2>
+    <label>Nome completo</label>
+    <input id="nome" placeholder="Digite seu nome completo">
 
-<label>Escolha o passeio</label>
-<select id="passeio" onchange="carregarPasseio()">
-  <option value="chapada">🌄 Chapada dos Guimarães</option>
-  <option value="lagoa">💙 Lagoa Azul</option>
-</select>
+    <label>Adultos</label>
+    <select id="qtdAdulto" onchange="atualizar()">
+      <option value="0">0</option>
+      <option value="1">1</option>
+      <option value="2">2</option>
+      <option value="3">3</option>
+      <option value="4">4</option>
+    </select>
 
-<p id="descricao"></p>
+    <label>Crianças</label>
+    <select id="qtdCrianca" onchange="atualizar()">
+      <option value="0">0</option>
+      <option value="1">1</option>
+      <option value="2">2</option>
+      <option value="3">3</option>
+    </select>
 
-<label>Nome completo</label>
-<input id="nomeCliente">
+    <label>Veículo próprio</label>
+    <select id="qtdCarro" onchange="atualizar()">
+      <option value="0">0</option>
+      <option value="1">1</option>
+      <option value="2">2</option>
+    </select>
 
-<div id="boxChapada">
-<label>Opção</label>
-<select id="opcaoChapada" onchange="atualizar()">
-  <option value="compartilhado_transporte">🛏️ Quarto compartilhado – transporte incluso</option>
-  <option value="casal_transporte">🛌 Quarto casal – transporte incluso</option>
-  <option value="compartilhado_carro">🚗 Carro próprio – quarto compartilhado</option>
-  <option value="casal_carro">🚗 Carro próprio – quarto casal</option>
-</select>
+    <div id="infoVagas" class="info"></div>
+    <div id="ultimas" class="ultimas">⚠️ ÚLTIMAS VAGAS</div>
+    <div id="esgotado" class="esgotado">❌ VAGAS ESGOTADAS</div>
+    <div id="total" class="total"></div>
 
-<label>Quantidade de vagas</label>
-<select id="qtdVagas" onchange="atualizar()">
-  <option>0</option><option>1</option><option>2</option><option>3</option>
-  <option>4</option><option>5</option><option>6</option><option>7</option>
-  <option>8</option><option>9</option><option>10</option>
-</select>
+    <button onclick="confirmar()">CONFIRMAR E ENVIAR COMPROVANTE</button>
+
+  </div>
 </div>
 
-<div id="boxLagoa" style="display:none">
-<label>Adultos</label>
-<select id="qtdAdulto" onchange="atualizar()">
-  <option>0</option><option>1</option><option>2</option><option>3</option>
-</select>
+<script>
+const vagasTotal = 30;
 
-<label>Crianças</label>
-<select id="qtdCrianca" onchange="atualizar()">
-  <option>0</option><option>1</option><option>2</option>
-</select>
+function v(id) {
+  const el = document.getElementById(id);
+  return el ? Number(el.value) : 0;
+}
 
-<label>Veículo próprio</label>
-<select id="qtdCarro" onchange="atualizar()">
-  <option>0</option><option>1</option><option>2</option>
-</select>
-</div>
+function atualizar() {
+  const adultos = v("qtdAdulto");
+  const criancas = v("qtdCrianca");
+  const carro = v("qtdCarro");
 
-<div id="infoVagas" class="info"></div>
-<div id="ultimas" class="ultimas">⚠️ ÚLTIMAS VAGAS</div>
-<div id="esgotado" class="esgotado">❌ VAGAS ESGOTADAS</div>
+  const totalVagas = adultos + criancas + carro;
 
-<div id="total" class="total"></div>
+  const valor =
+    adultos * 340 +
+    criancas * 280 +
+    carro * 215;
 
-<label>Forma de pagamento</label>
-<select id="pagamento" onchange="atualizar()">
-  <option value="pix">PIX</option>
-  <option value="cartao">Cartão</option>
-</select>
+  const restantes = vagasTotal - totalVagas;
 
-<button class="btn" onclick="confirmar()">CONFIRMAR E ENVIAR COMPROVANTE</button>
+  document.getElementById("total").innerHTML =
+    `🎟️ ${totalVagas} vaga(s) | 💰 R$ ${valor}`;
 
-</div>
-</div>
+  document.getElementById("infoVagas").innerHTML =
+    `Vagas restantes: ${restantes}`;
+
+  document.getElementById("ultimas").style.display =
+    restantes <= 5 && restantes > 0 ? "block" : "none";
+
+  document.getElementById("esgotado").style.display =
+    restantes <= 0 ? "block" : "none";
+}
+
+function confirmar() {
+  const nome = document.getElementById("nome").value.trim();
+
+  if (!nome) {
+    alert("Informe seu nome para continuar.");
+    return;
+  }
+
+  alert(
+    "Pagamento realizado.\n\n⚠️ Envie o comprovante no WhatsApp para garantir sua vaga."
+  );
+}
+</script>
+
 </body>
 </html>
