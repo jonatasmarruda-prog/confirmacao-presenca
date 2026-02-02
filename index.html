@@ -1,205 +1,289 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Lista de Presença - Ônibus</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reservas – Trilhas de Março</title>
 
-  <style>
-    :root{--bg:#0d0d0d;--card:#1a1a1a;--accent:#16a34a;--danger:#dc2626;--muted:#aaa}
-    *{box-sizing:border-box}
-    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial; margin:0; background:var(--bg); color:white}
-    .app{max-width:720px;margin:0 auto;padding:16px}
-    h1{font-size:20px;margin:0;text-align:center}
-    .status{margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
-    .chip{background:var(--card); color:white;padding:8px 12px;border-radius:12px;font-weight:600}
-    .controls{display:flex;gap:8px;margin-top:12px}
-    button.btn{flex:1;padding:12px;border-radius:10px;border:0;font-size:16px;font-weight:700}
-    .btn-all{background:#444;color:#fff}
-    .btn-confirm{background:var(--accent);color:#fff}
-    .btn-missing{background:var(--danger);color:#fff}
-    .list{margin-top:14px;background:var(--card); color:white;border-radius:12px;padding:8px}
-    .item{display:flex;align-items:center;justify-content:space-between;padding:12px;border-bottom:1px solid #333}
-    .item:last-child{border-bottom:0}
-    .name{font-size:18px;font-weight:700}
-    .confirm-btn{padding:10px 14px;border-radius:8px;border:0;font-weight:800;cursor:pointer}
-    .confirmed{background:#16a34a;color:#fff}
-    .not-confirmed{background:#1a1a1a;border:2px dashed #555;color:#aaa}
-    footer{margin-top:14px;text-align:center;color:var(--muted);font-size:13px}
-    @media(min-width:560px){h1{font-size:24px}.name{font-size:20px}}
-  </style>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+
+<style>
+body{margin:0;background:#0f0f0f;font-family:Poppins,sans-serif;color:#fff}
+.container{max-width:520px;margin:auto;padding:14px}
+.card{background:#181818;border-radius:22px;padding:16px;box-shadow:0 0 25px rgba(0,0,0,.7)}
+.banner img{width:100%;border-radius:18px}
+
+h2{text-align:center;margin:10px 0}
+p{font-size:14px;line-height:1.6;color:#ddd}
+
+label{margin-top:12px;display:block;font-weight:600}
+select,input{
+  width:100%;
+  padding:14px;
+  border-radius:14px;
+  border:none;
+  background:#2a2a2a;
+  color:#fff;
+}
+
+.info{text-align:center;margin-top:6px;font-size:14px}
+.total{font-size:22px;font-weight:700;text-align:center;color:#00ff9c;margin-top:10px}
+
+.ultimas{
+  display:none;
+  background:#ff1744;
+  padding:10px;
+  border-radius:12px;
+  text-align:center;
+  font-weight:700;
+  margin-top:8px;
+  animation:pulse .8s infinite;
+}
+@keyframes pulse{0%{opacity:1}50%{opacity:.5}100%{opacity:1}}
+
+.esgotado{
+  display:none;
+  background:#550000;
+  padding:12px;
+  border-radius:12px;
+  text-align:center;
+  font-weight:700;
+  margin-top:10px;
+}
+
+.btn{
+  width:100%;
+  margin-top:16px;
+  padding:18px;
+  border-radius:50px;
+  border:none;
+  font-size:18px;
+  font-weight:700;
+  background:linear-gradient(135deg,#00ff9c,#00c96b);
+  cursor:pointer;
+}
+</style>
+
+<script>
+const PIX="trilheiros.roomt@gmail.com";
+const WHATS="5566996926174";
+
+/* LINKS DE CARTÃO – APENAS 1 VAGA */
+const CARTAO_CHAPADA={
+  compartilhado_transporte:"https://mpago.li/1VoTeFx",
+  casal_transporte:"https://mpago.li/1szssQp",
+  casal_carro:"https://mpago.li/2iuq5uT"
+};
+
+/* VAGAS */
+const VAGAS={
+  chapada:{total:30,key:"vagas_chapada"},
+  lagoa:{total:28,key:"vagas_lagoa"}
+};
+
+/* VALORES */
+const VALORES={
+  chapada:{
+    compartilhado_transporte:{pix:420,cartao:440},
+    casal_transporte:{pix:740,cartao:760},
+    compartilhado_carro:{pix:330,cartao:350},
+    casal_carro:{pix:510,cartao:530}
+  },
+  lagoa:{
+    adulto:{pix:336,cartao:340},
+    crianca:{pix:280,cartao:280},
+    carro:{pix:215,cartao:215}
+  }
+};
+
+let passeioAtual="chapada";
+let vagasDisponiveis=0;
+
+function iniciar(){
+  carregarPasseio();
+}
+
+function carregarPasseio(){
+  passeioAtual=passeio.value;
+
+  if(passeioAtual==="chapada"){
+    banner.src="https://i.postimg.cc/vZLwxjSc/Copia-de-Post-instagram-dia-dos-povos-indigenas-ousado-verde.png";
+    descricao.innerHTML=`
+🗓️ <b>7 e 8 de março</b><br>
+🕑 Saída: 07/03 às 14h<br>
+🕒 Retorno: 08/03 às 15h<br><br>
+🏡 <b>Hospedagem:</b> Pousada Mirante<br><br>
+📍 <b>Roteiro:</b><br>
+• Mirante Geodésico<br>
+• Mirante Morro dos Ventos<br>
+• Praça Central da Chapada<br>
+• Cachoeira Véu da Noiva<br><br>
+✅ Incluso: transporte (exceto carro próprio), café da manhã e acesso aos atrativos<br>
+❌ Não incluso: almoço e jantar
+`;
+    boxChapada.style.display="block";
+    boxLagoa.style.display="none";
+  }
+
+  if(passeioAtual==="lagoa"){
+    banner.src="https://i.postimg.cc/7hYnXCqs/Instagram-Post-Agencia-de-Viagem-Moderno-Azul-e-Branco.png";
+    descricao.innerHTML=`
+🗓️ <b>15 de março</b><br>
+🚐 Saída de Rondonópolis<br><br>
+💙 Um dia inteiro em águas cristalinas.<br><br>
+✅ Incluso: transporte, snorkel, colete, seguro de vida e guia<br>
+❌ Não incluso: café da manhã e almoço
+`;
+    boxChapada.style.display="none";
+    boxLagoa.style.display="block";
+  }
+
+  vagasDisponiveis=localStorage.getItem(VAGAS[passeioAtual].key);
+  if(vagasDisponiveis===null){
+    vagasDisponiveis=VAGAS[passeioAtual].total;
+    localStorage.setItem(VAGAS[passeioAtual].key,vagasDisponiveis);
+  }
+  vagasDisponiveis=parseInt(vagasDisponiveis);
+
+  atualizar();
+}
+
+function atualizar(){
+  let qtd=0,totalValor=0;
+  const forma=pagamento.value;
+
+  infoVagas.innerHTML=`🎟️ Vagas disponíveis: <b>${vagasDisponiveis}</b>`;
+  ultimas.style.display=(vagasDisponiveis<=5 && vagasDisponiveis>0)?"block":"none";
+  esgotado.style.display=vagasDisponiveis<=0?"block":"none";
+
+  if(passeioAtual==="chapada"){
+    qtd=parseInt(qtdVagas.value);
+    if(qtd>0) totalValor=qtd*VALORES.chapada[opcaoChapada.value][forma];
+  }
+
+  if(passeioAtual==="lagoa"){
+    qtd=parseInt(qtdAdulto.value)+parseInt(qtdCrianca.value)+parseInt(qtdCarro.value);
+    totalValor=
+      (parseInt(qtdAdulto.value)*VALORES.lagoa.adulto[forma])+
+      (parseInt(qtdCrianca.value)*VALORES.lagoa.crianca[forma])+
+      (parseInt(qtdCarro.value)*VALORES.lagoa.carro[forma]);
+  }
+
+  if(qtd===0||vagasDisponiveis<=0){total.innerText="";return;}
+  if(qtd>vagasDisponiveis){total.innerText="⚠️ Quantidade maior que vagas disponíveis";return;}
+
+  total.innerText=`🎟️ ${qtd} vaga(s) | 💰 R$ ${totalValor}`;
+}
+
+function confirmar(){
+  if(!nomeCliente.value.trim()) return alert("Informe seu nome.");
+
+  let qtd=0;
+  if(passeioAtual==="chapada") qtd=parseInt(qtdVagas.value);
+  if(passeioAtual==="lagoa") qtd=parseInt(qtdAdulto.value)+parseInt(qtdCrianca.value)+parseInt(qtdCarro.value);
+  if(qtd>vagasDisponiveis) return;
+
+  if(pagamento.value==="pix"){
+    navigator.clipboard.writeText(PIX);
+    alert("PIX copiado! Envie o comprovante para garantir sua vaga.");
+  }else{
+    if(qtd>1){
+      alert("Para mais de uma vaga no cartão, fale com o Jonatas para gerar um novo link.");
+      return;
+    }
+    if(passeioAtual==="chapada" && CARTAO_CHAPADA[opcaoChapada.value]){
+      window.open(CARTAO_CHAPADA[opcaoChapada.value],"_blank");
+      alert("Após o pagamento, envie o comprovante.");
+    }else{
+      alert("Pagamento no cartão disponível apenas via contato com o Jonatas.");
+      return;
+    }
+  }
+
+  vagasDisponiveis-=qtd;
+  localStorage.setItem(VAGAS[passeioAtual].key,vagasDisponiveis);
+
+  const msg=`Reserva – ${passeio.options[passeio.selectedIndex].text}
+Nome: ${nomeCliente.value}
+${total.innerText}
+
+Envio o comprovante para garantir minha vaga.`;
+
+  window.open(`https://wa.me/${WHATS}?text=${encodeURIComponent(msg)}`);
+  atualizar();
+}
+</script>
 </head>
 
-<body>
-  <div style="text-align:center;margin-bottom:16px;">
-    <img src="https://i.imgur.com/MwHr761.png" alt="Logo Trilheiros" style="width:120px;margin-top:12px;" />
-  </div>
+<body onload="iniciar()">
+<div class="container">
+<div class="card">
 
-  <div class="app">
+<div class="banner"><img id="banner"></div>
 
-    <h1>Lista de Presença - Ônibus</h1>
+<h2>Reservas</h2>
 
-    <div class="status">
-      <div class="chip" id="total">Total: 0</div>
-      <div class="chip" id="confirmedCount">Confirmados: 0</div>
-      <div class="chip" id="missingCount">Faltantes: 0</div>
-    </div>
+<label>Escolha o passeio</label>
+<select id="passeio" onchange="carregarPasseio()">
+  <option value="chapada">🌄 Chapada dos Guimarães</option>
+  <option value="lagoa">💙 Lagoa Azul</option>
+</select>
 
-    <div class="controls">
-      <button class="btn btn-all" id="showAll">Ver todos</button>
-      <button class="btn btn-confirm" id="showConfirmed">Confirmados</button>
-      <button class="btn btn-missing" id="showMissing">Faltantes</button>
-    </div>
+<p id="descricao"></p>
 
-    <div class="list" id="list"></div>
+<label>Nome completo</label>
+<input id="nomeCliente">
 
-    <footer>Toque no seu nome para confirmar sua presença.</footer>
+<div id="boxChapada">
+<label>Opção</label>
+<select id="opcaoChapada" onchange="atualizar()">
+  <option value="compartilhado_transporte">🛏️ Quarto compartilhado – transporte incluso</option>
+  <option value="casal_transporte">🛌 Quarto casal – transporte incluso</option>
+  <option value="compartilhado_carro">🚗 Carro próprio – quarto compartilhado</option>
+  <option value="casal_carro">🚗 Carro próprio – quarto casal</option>
+</select>
 
-    <div style="text-align:center;margin-top:20px;">
-      <button id="resetTrigger" style="margin-top:10px;padding:10px 14px;border-radius:8px;border:0;background:#333;color:#fff;font-size:14px;">
-        Segurar 5s para Reset
-      </button>
-    </div>
-  </div>
+<label>Quantidade de vagas</label>
+<select id="qtdVagas" onchange="atualizar()">
+  <option>0</option><option>1</option><option>2</option><option>3</option>
+  <option>4</option><option>5</option><option>6</option><option>7</option>
+  <option>8</option><option>9</option><option>10</option>
+</select>
+</div>
 
-  <!-- SOM ENGRAÇADO -->
-  <audio id="somConfirma" src="https://www.myinstants.com/media/sounds/cartoon-pop.mp3"></audio>
+<div id="boxLagoa" style="display:none">
+<label>Adultos</label>
+<select id="qtdAdulto" onchange="atualizar()">
+  <option>0</option><option>1</option><option>2</option><option>3</option>
+</select>
 
-  <!-- Firebase -->
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<label>Crianças</label>
+<select id="qtdCrianca" onchange="atualizar()">
+  <option>0</option><option>1</option><option>2</option>
+</select>
 
-  <script>
-    // === CONFIG DO FIREBASE ===
-    const firebaseConfig = {
-      apiKey: "AIzaSyAUssjdtiOs0oO9yhWV3dExsj7sGaB4jEA",
-      authDomain: "onibus-morro-da-mesa.firebaseapp.com",
-      databaseURL: "https://onibus-morro-da-mesa-default-rtdb.firebaseio.com",
-      projectId: "onibus-morro-da-mesa",
-      storageBucket: "onibus-morro-da-mesa.firebasestorage.app",
-      messagingSenderId: "21597144482",
-      appId: "1:21597144482:web:93a55c39d477e67c1d5efb",
-      measurementId: "G-WP1BX1H1F0"
-    };
+<label>Veículo próprio</label>
+<select id="qtdCarro" onchange="atualizar()">
+  <option>0</option><option>1</option><option>2</option>
+</select>
+</div>
 
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-    const ref = db.ref("presenca_onibus");
+<div id="infoVagas" class="info"></div>
+<div id="ultimas" class="ultimas">⚠️ ÚLTIMAS VAGAS</div>
+<div id="esgotado" class="esgotado">❌ VAGAS ESGOTADAS</div>
 
-    // ===== Lista de nomes =====
-    const initialNames = [
-      "Alysson","Ana Julia","Cidinha","Debora Betania","Debora Carla","Edivaldo",
-      "Eliana","Elizangela","Elma","Fagner","Flavia Yane","Karla","Indrid Mirely",
-      "Isadora","Ivy","Izabel","Izabelly","Jessica","Jessica Lorrayne","Joana",
-      "Jonatas Marcos","Josiane","Junior","Livia","Lucas","Luciana","Luciene",
-      "Maria Lúcia","Maria Nemis","Maria Rafaela","Maria luisa","Meire","Nadir",
-      "Nayhany","Paula","Paula Francinete","Shely","Silvânia","Tamiris","Tatielen",
-      "Thaynan","Vitoria","Wallison","Clau"
-    ];
+<div id="total" class="total"></div>
 
-    const names = Array.from(new Set(initialNames)).sort((a,b)=>a.localeCompare(b));
+<label>Forma de pagamento</label>
+<select id="pagamento" onchange="atualizar()">
+  <option value="pix">PIX</option>
+  <option value="cartao">Cartão</option>
+</select>
 
-    // Elementos
-    const listEl = document.getElementById('list');
-    const totalEl = document.getElementById('total');
-    const confirmedEl = document.getElementById('confirmedCount');
-    const missingEl = document.getElementById('missingCount');
+<button class="btn" onclick="confirmar()">CONFIRMAR E ENVIAR COMPROVANTE</button>
 
-    totalEl.textContent = `Total: ${names.length}`;
-
-    let lastData = {};
-
-    // Se não existir no Firebase, cria
-    ref.once("value", snap => {
-      if (!snap.exists()) {
-        const init = {};
-        names.forEach(n => init[n] = false);
-        ref.set(init);
-      }
-    });
-
-    // Atualiza em tempo real
-    ref.on("value", snap => {
-      const data = snap.val() || {};
-      lastData = data;
-      render(data);
-    });
-
-    // ===== Som e confirmação =====
-    function toggle(name){
-      const som = document.getElementById("somConfirma");
-      som.currentTime = 0;
-      som.play();
-
-      ref.child(name).transaction(v => !v);
-    }
-
-    // ===== Renderizar lista =====
-    function render(data){
-      const confirmed = Object.values(data).filter(v => v).length;
-      const missing = names.length - confirmed;
-
-      confirmedEl.textContent = `Confirmados: ${confirmed}`;
-      missingEl.textContent = `Faltantes: ${missing}`;
-
-      const filter = listEl.getAttribute("data-filter") || "all";
-
-      listEl.innerHTML = "";
-
-      names.forEach(name => {
-        const is = data[name];
-
-        if (filter === "confirmed" && !is) return;
-        if (filter === "missing" && is) return;
-
-        const item = document.createElement("div");
-        item.className = "item";
-
-        item.innerHTML = `
-          <div class="name">${name}</div>
-          <button class="confirm-btn ${is ? "confirmed" : "not-confirmed"}">
-            ${is ? "Confirmado" : "Confirmar"}
-          </button>
-        `;
-
-        item.querySelector("button").onclick = () => toggle(name);
-
-        listEl.appendChild(item);
-      });
-    }
-
-    // ===== Botões de filtro =====
-    document.getElementById("showAll").onclick = () => {
-      listEl.setAttribute("data-filter", "all");
-      render(lastData);
-    };
-
-    document.getElementById("showConfirmed").onclick = () => {
-      listEl.setAttribute("data-filter", "confirmed");
-      render(lastData);
-    };
-
-    document.getElementById("showMissing").onclick = () => {
-      listEl.setAttribute("data-filter", "missing");
-      render(lastData);
-    };
-
-    // ===== Reset seguro =====
-    const resetBtn = document.getElementById("resetTrigger");
-    let pressTimer;
-
-    resetBtn.onmousedown = () => {
-      pressTimer = setTimeout(() => {
-        const novo = {};
-        names.forEach(n => novo[n] = false);
-        ref.set(novo);
-        alert("Lista resetada!");
-      }, 5000);
-    };
-
-    resetBtn.onmouseup = () => clearTimeout(pressTimer);
-    resetBtn.onmouseleave = () => clearTimeout(pressTimer);
-  </script>
-
+</div>
+</div>
 </body>
 </html>
+
